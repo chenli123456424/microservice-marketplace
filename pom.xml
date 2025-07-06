@@ -9,6 +9,9 @@
     <version>1.0.0</version>
     <!--打包方式必须为pom-->
     <packaging>pom</packaging>
+    <modules>
+        <module>user-service</module>
+    </modules>
 
     <!--2，继承Spring Boot的父项目
         这是最重要的依赖，它就像一个“百宝箱”，预先定好了大部分的依赖的最佳版本 。
