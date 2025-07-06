@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!--1.项目自身坐标-->
+    <groupId>com.example.microservice</groupId>
+    <artifactId>microservice-marketplace</artifactId>
+    <version>1.0.0</version>
+    <!--打包方式必须为pom-->
+    <packaging>pom</packaging>
+
+    <!--2，继承Spring Boot的父项目
+        这是最重要的依赖，它就像一个“百宝箱”，预先定好了大部分的依赖的最佳版本 。
+        继承父项目后，Spring Boot会自动将所有子项目都加入到构建中，无需再写版本号 。
+    -->
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>2.1.0.RELEASE</version>
+        <relativePath/>
+    </parent>
+
+    <!-- 3.自定义属性，用于统一管理版本号-->
+    <properties>
+        <java.version>1.8</java.version>
+        <!--
+            Spring Cloud的版本号不是数字,而是以伦敦地铁站命名的代号 。
+            它和Spring Boot的版本有严格的对应关系,不能乱用 。
+            Hoxton.SR12是适配Spring Boot 2.3.x系列的.
+        -->
+        <spring-cloud.version>Hoxton.SR12</spring-cloud.version>
+        <myswl.version>8.0.28</myswl.version>
+        <lombok.version>1.18.20</lombok.version>
+        <mybatis-plus.version>3.4.2</mybatis-plus.version>
+    </properties>
+
+    <!--
+       4. 依赖管理 (dependencyManagement)
+       这里是“版本仲裁中心”。在这里声明的依赖，并不会被实际引入项目。
+       它的作用是：当子模块需要用到某个依赖时，只需要写 groupId 和 artifactId，
+       版本号会自动从这里继承。好处是所有子模块用的版本都由父工程统一控制。
+   -->
+    <dependencyManagement>
+        <dependencies>
+            <!--Spring Cloud的依赖-->
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>${spring-cloud.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <!--MySQL的依赖-->
+            <dependency>
+                <groupId>mysql</groupId>
+                <artifactId>mysql-connector-java</artifactId>
+                <version>${myswl.version}</version>
+            </dependency>
+            <!--mybatisPlus的依赖-->
+            <dependency>
+                <groupId>com.baomidou</groupId>
+                <artifactId>mybatis-plus-boot-starter</artifactId>
+                <version>${mybatis-plus.version}</version>
+            </dependency>
+            <!--lombok,简化代码的依赖-->
+            <dependency>
+                <groupId>org.projectlombok</groupId>
+                <artifactId>lombok</artifactId>
+                <version>${lombok.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>
