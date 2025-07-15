@@ -1,47 +1,19 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
-
-    <!-- 1. 继承父工程 -->
     <parent>
         <groupId>com.example.microservice</groupId>
         <artifactId>microservice-marketplace</artifactId>
         <version>1.0.0</version>
     </parent>
-
-    <!-- 2. 自己的坐标 -->
     <artifactId>user-service</artifactId>
-
-    <!-- 3. 添加自己特有的依赖 -->
+    <name>Archetype - user-service</name>
+    <url>http://maven.apache.org</url>
     <dependencies>
-        <!--
-            Spring Boot Web Starter: 这是构建Web应用的核心依赖。
-            引入它之后，就自动包含了Spring MVC、一个内嵌的Tomcat服务器等所有Web开发需要的东西。
-            我们不需要写<version>，因为它继承自父工程的spring-boot-starter-parent。
-        -->
+        <!--注解类的依赖-->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
-
-        <!--
-            Lombok: 一个神奇的Java库，可以帮你自动生成Getter, Setter, 构造函数等样板代码。
-            我们在父工程的<dependencyManagement>中定义了版本，这里直接引用即可。
-        -->
-        <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <scope>provided</scope> <!-- 通常设置为provided，因为编译时需要，运行时不需要 -->
-        </dependency>
-
-        <!-- Spring Boot 测试依赖 -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-test</artifactId>
-            <scope>test</scope>
-        </dependency>
     </dependencies>
-
 </project>
