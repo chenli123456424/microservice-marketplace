@@ -1,0 +1,17 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: user-service # 服务名称
+  datasource:
+    url: jdbc:mysql://localhost:3307/ecommerce_user?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai
+    username: root
+    password: 123456
+    driver-class-name: com.mysql.jdbc.Driver
+
+mybatis-plus:
+    mapper-locations: classpath*:mapper/*.xml
+    global-config:
+        db-config:
+            id-type: auto
