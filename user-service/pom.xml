@@ -1,14 +1,19 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
+    <!-- 继承父工程 -->
     <parent>
         <groupId>com.example.microservice</groupId>
         <artifactId>microservice-marketplace</artifactId>
         <version>1.0.0</version>
     </parent>
+
+    <!-- 当前工程信息 -->
     <artifactId>user-service</artifactId>
     <name>Archetype - user-service</name>
     <url>http://maven.apache.org</url>
+
+    <!-- 当前工程属性 -->
     <dependencies>
         <!--注解类的依赖-->
         <dependency>
@@ -36,6 +41,11 @@
             <groupId>com.baomidou</groupId>
             <artifactId>mybatis-plus-boot-starter</artifactId>
             <version>3.2.0</version>
+        </dependency>
+        <!-- 增加 Spring Security 依赖 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
         </dependency>
     </dependencies>
 </project>

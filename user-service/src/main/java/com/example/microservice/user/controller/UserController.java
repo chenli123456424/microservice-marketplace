@@ -2,6 +2,7 @@ package com.example.microservice.user.controller;
 
 import com.example.microservice.user.entity.User;
 import com.example.microservice.user.mapper.UserMapper;
+import com.example.microservice.user.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -15,9 +16,9 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/user")
 public class UserController {
-
+    // 注入service层
     @Autowired
-    private UserMapper userMapper;
+    private UserService userService;
 
     /**
      * @PostMapping("/register"): 映射到HTTP POST请求，通常用于创建资源。
@@ -29,10 +30,8 @@ public class UserController {
      */
     @PostMapping("/register")
     public User register(@RequestBody User user) {
-        // 调用继承自BaseMapper的insert方法，将用户数据插入数据库
-        userMapper.insert(user);
-        // 插入成功后，Mybatis-Plus会将数据库生成的自增ID回填到user对象中
-        return user;
+        //调用service层的方法
+        return userService.register(user);
     }
 
     /**
@@ -44,6 +43,7 @@ public class UserController {
      */
     @GetMapping("/{id}")
     public User getUserById(@PathVariable Long id) {
-        return userMapper.selectById(id);
+        //调用继承自Iservice的getById方法
+        return userService.getById(id);
     }
 }
