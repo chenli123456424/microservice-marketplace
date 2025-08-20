@@ -15,4 +15,11 @@ public interface UserService extends IService<User> {
      * @return 注册成功的用户
      */
     User register(User user);
+    /**
+     * 登录方法
+     * @param username 用户名
+     * @param password 密码
+     * @return 登录成功后生成的JWT
+     */
+    String login(String username, String password);
 }

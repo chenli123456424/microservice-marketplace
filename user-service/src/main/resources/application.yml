@@ -15,3 +15,7 @@ mybatis-plus:
     global-config:
         db-config:
             id-type: auto
+
+app:
+  jwt:
+      secret: C#fB&v2@zL8qR9pW*sE$hN7gY!uM4jK3aG6dF5tH2bV1nJ0cZ_xL-kP+oI>uY<t

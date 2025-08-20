@@ -1,10 +1,15 @@
 package com.example.microservice.user.controller;
 
+import com.example.microservice.user.dto.LoginRequest;
 import com.example.microservice.user.entity.User;
 import com.example.microservice.user.mapper.UserMapper;
 import com.example.microservice.user.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Map;
 
 /**
  * @RestController: 这是一个组合注解，相当于 @Controller + @ResponseBody。
@@ -45,5 +50,11 @@ public class UserController {
     public User getUserById(@PathVariable Long id) {
         //调用继承自Iservice的getById方法
         return userService.getById(id);
+    }
+    @PostMapping("/login")
+    public Map<String, String> login(@RequestBody LoginRequest loginRequest){
+        String token = userService.login(loginRequest.getUsername(), loginRequest.getPassword());
+        //为了方便前端使用，我们将token包装在json对象中返回给前端
+        return Collections.singletonMap("token", token);
     }
 }
