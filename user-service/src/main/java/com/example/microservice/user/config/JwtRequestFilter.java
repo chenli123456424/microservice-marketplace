@@ -3,6 +3,7 @@ package com.example.microservice.user.config;
 import com.example.microservice.user.util.JwtUtil;
 import io.jsonwebtoken.io.IOException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -19,6 +20,7 @@ import javax.servlet.http.HttpServletResponse;
 @Component
 public class JwtRequestFilter extends OncePerRequestFilter {
     @Autowired
+    @Lazy
     private UserDetailsService userDetailsService;
 
     @Autowired

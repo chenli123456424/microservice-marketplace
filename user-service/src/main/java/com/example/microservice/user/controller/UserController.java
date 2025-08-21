@@ -1,13 +1,9 @@
 package com.example.microservice.user.controller;
-
 import com.example.microservice.user.dto.LoginRequest;
 import com.example.microservice.user.entity.User;
-import com.example.microservice.user.mapper.UserMapper;
 import com.example.microservice.user.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 
@@ -17,6 +13,10 @@ import java.util.Map;
  *
  * @RequestMapping("/api/user"): 定义了这个Controller中所有接口的公共路径前缀。
  * 也就是说，访问这个类里的任何接口，URL都必须以 /api/user 开头。
+ *
+ * @CrossOrigin 注解允许来自所有源的跨域请求。
+ * 在生产环境中，为了安全，我们会配置为只允许特定的源，如 @CrossOrigin(origins = "http://your-frontend-domain.com")
+ * 但在开发环境中，这样写是最方便的。
  */
 @RestController
 @RequestMapping("/api/user")
