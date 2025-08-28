@@ -18,7 +18,6 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import javax.swing.*;
 import java.util.Collections;
 import java.util.Random;
 import java.util.UUID;
@@ -85,9 +84,17 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     // 登录
     @Override
     public String login(String username, String password) {
-        // 1. 根据用户名查询用户
+        // 1. 根据用户名或邮箱查询用户
         QueryWrapper<User> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("username", username);
+        // 检查输入的是邮箱还是用户名
+        if (username.contains("@")) {
+            // 如果包含@符号，则按邮箱查询
+            queryWrapper.eq("email", username);
+        } else {
+            // 否则按用户名查询
+            queryWrapper.eq("username", username);
+        }
+        
         User user = baseMapper.selectOne(queryWrapper);
         // 如果用户不存在，则抛出异常
         if (user == null) {
@@ -161,15 +168,92 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         return jwtUtil.generateToken(user.getUsername());
     }
 
+    // 忘记密码
+    @Override
+    public void forgotPassword(String email) {
+        // 1. 检查用户是否存在
+        QueryWrapper<User> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("email", email);
+        User user = baseMapper.selectOne(queryWrapper);
+
+        if (user == null) {
+            throw new BadCredentialsException("用户不存在");
+        }
+
+        // 2. 生成随机6位数验证码
+        String code = String.format("%06d", new Random().nextInt(999999));
+        // 3. 将验证码保存到 Redis 中，并设置5分钟的有效期
+        String redisKey = "reset_password_code:" + email;
+        redisTemplate.opsForValue().set(redisKey, code, 5 * 60L, TimeUnit.SECONDS);
+        // 4. 创建邮件对象
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setFrom(fromEmail);
+        message.setTo(email);
+        message.setSubject("重置密码");
+        message.setText("欢迎使用电商平台，您的重置密码验证码是：" + code + "，有效期为5分钟。");
+        mailSender.send(message);
+    }
+
+    // 验证重置密码验证码
+    @Override
+    public boolean verifyResetCode(String email, String code) {
+        // 获取Redis中的验证码
+        String redisKey = "reset_password_code:" + email;
+        String correctCode = redisTemplate.opsForValue().get(redisKey);
+
+        // 校验验证码
+        if (correctCode == null) {
+            return false; // 验证码已过期
+        }
+
+        // 比较验证码
+        return correctCode.equals(code);
+    }
+
+    // 重置密码
+    @Override
+    public boolean resetPassword(String email, String code, String newPassword) {
+        // 再次验证验证码确保安全性
+        if (!verifyResetCode(email, code)) {
+            return false;
+        }
+
+        // 验证通过后，删除Redis中的验证码，避免重复使用
+        String redisKey = "reset_password_code:" + email;
+        redisTemplate.delete(redisKey);
+
+        // 更新密码
+        QueryWrapper<User> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("email", email);
+        User user = baseMapper.selectOne(queryWrapper);
+
+        if (user == null) {
+            return false; // 用户不存在
+        }
+
+        // 对密码进行加密储存
+        String encodedPassword = passwordEncoder.encode(newPassword);
+        user.setPassword(encodedPassword);
+        baseMapper.updateById(user);
+        return true; // 返回true表示重置成功
+    }
+
     /**
      * 这是 UserDetailsService 接口要求实现的方法
      * Spring Security 在进行认证时会调用这个方法来加载用户信息
      */
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException{
-        // 1. 从我们的数据库中根据用户名查询用户
+        // 1. 从我们的数据库中根据用户名或邮箱查询用户
         QueryWrapper<User> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("username", username);
+        // 检查输入的是邮箱还是用户名
+        if (username.contains("@")) {
+            // 如果包含@符号，则按邮箱查询
+            queryWrapper.eq("email", username);
+        } else {
+            // 否则按用户名查询
+            queryWrapper.eq("username", username);
+        }
         User user = baseMapper.selectOne(queryWrapper);
 
         // 2.如果用户不存在，则抛出异常

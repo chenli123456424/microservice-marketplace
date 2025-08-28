@@ -35,5 +35,28 @@ public interface UserService extends IService<User>, UserDetailsService {
      * @return 登录成功后生成的JWT Token
      */
     String verifyCodeAndLogin(String email, String code);
+    /**
+     * 处理忘记密码请求，发送重置密码验证码
+     * @param email 用户邮箱
+     */
+    void forgotPassword(String email);
+    
+    /**
+     * 验证重置密码验证码
+     * @param email 用户邮箱
+     * @param code 验证码
+     * @return 验证是否成功
+     */
+    boolean verifyResetCode(String email, String code);
+    
+    /**
+     * 重置用户密码
+     * @param email 用户邮箱
+     * @param code 验证码
+     * @param newPassword 新密码
+     * @return 重置是否成功
+     */
+    boolean resetPassword(String email, String code, String newPassword);
+
 }
 

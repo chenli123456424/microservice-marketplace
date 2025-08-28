@@ -1,12 +1,11 @@
 package com.example.microservice.user.controller;
-import com.example.microservice.user.dto.LoginRequest;
-import com.example.microservice.user.dto.SendCodeRequest;
-import com.example.microservice.user.dto.VerifyCodeRequest;
+import com.example.microservice.user.dto.*;
 import com.example.microservice.user.entity.User;
 import com.example.microservice.user.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -72,5 +71,37 @@ public class UserController {
     public Map<String, String> verifyCode(@RequestBody VerifyCodeRequest request){
         String token = userService.verifyCodeAndLogin(request.getEmail(), request.getCode());
         return Collections.singletonMap("token", token);
+    }
+
+    // 忘记密码 - 发送重置密码验证码
+    @PostMapping("/forgot-password")
+    public Map<String, String> forgotPassword(@RequestBody ForgotPasswordRequest request) {
+        userService.forgotPassword(request.getEmail());
+        return Collections.singletonMap("message", "重置密码验证码已发送到您的邮箱");
+    }
+    
+    // 验证重置密码验证码
+    @PostMapping("/verify-reset-code")
+    public Map<String, Object> verifyResetCode(@RequestBody VerifyResetCodeRequest request) {
+        boolean isValid = userService.verifyResetCode(request.getEmail(), request.getCode());
+        Map<String, Object> response = new HashMap<>();
+        response.put("valid", isValid);
+        if (isValid) {
+            response.put("message", "验证码正确");
+        } else {
+            response.put("error", "验证码错误或已过期");
+        }
+        return response;
+    }
+    
+    // 重置密码
+    @PostMapping("/reset-password")
+    public Map<String, String> resetPassword(@RequestBody ResetPasswordRequest request) {
+        boolean success = userService.resetPassword(request.getEmail(), request.getCode(), request.getNewPassword());
+        if (success) {
+            return Collections.singletonMap("message", "密码重置成功");
+        } else {
+            return Collections.singletonMap("error", "密码重置失败，请检查验证码是否正确");
+        }
     }
 }

@@ -57,7 +57,14 @@ public class SecurityConfig {
                 .requestCache(cache -> cache.requestCache(new NullRequestCache()))
 
                 .authorizeHttpRequests(auth -> auth
-                            .requestMatchers("/api/user/register", "/api/user/login", "/api/user/send-code", "/api/user/verify-code").permitAll()
+                            .requestMatchers(
+                                    "/api/user/register",
+                                    "/api/user/login",
+                                    "/api/user/send-code",
+                                    "/api/user/verify-code",
+                                    "/api/user/forgot-password",
+                                    "/api/user/reset-password",
+                                    "/api/user/verify-reset-code").permitAll()
                             .anyRequest().authenticated())
 
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
