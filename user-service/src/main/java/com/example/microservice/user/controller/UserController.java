@@ -1,5 +1,7 @@
 package com.example.microservice.user.controller;
 import com.example.microservice.user.dto.LoginRequest;
+import com.example.microservice.user.dto.SendCodeRequest;
+import com.example.microservice.user.dto.VerifyCodeRequest;
 import com.example.microservice.user.entity.User;
 import com.example.microservice.user.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -55,6 +57,20 @@ public class UserController {
     public Map<String, String> login(@RequestBody LoginRequest loginRequest){
         String token = userService.login(loginRequest.getUsername(), loginRequest.getPassword());
         //为了方便前端使用，我们将token包装在json对象中返回给前端
+        return Collections.singletonMap("token", token);
+    }
+
+    // 发送验证码
+    @PostMapping("/send-code")
+    public Map<String, String> sendCode(@RequestBody SendCodeRequest request) {
+        userService.sendVerificationCode(request.getEmail());//调用service层方法
+        return Collections.singletonMap("message", "验证码已发送");
+    }
+
+    // 验证码登录
+    @PostMapping("/verify-code")
+    public Map<String, String> verifyCode(@RequestBody VerifyCodeRequest request){
+        String token = userService.verifyCodeAndLogin(request.getEmail(), request.getCode());
         return Collections.singletonMap("token", token);
     }
 }

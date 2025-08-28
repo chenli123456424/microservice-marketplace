@@ -2,6 +2,7 @@ package com.example.microservice.user.util;
 
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.Claims;
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.util.Date;
@@ -9,7 +10,7 @@ import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 
 /**
  * @Component 是用于声明一个Bean，这个Bean会自动被Spring容器管理。
@@ -54,12 +55,20 @@ public class JwtUtil {
      * @return 用户名
      */
     public String extractUsername(String token) {
-        return Jwts.parserBuilder()
-                .setSigningKey(key)//设置密钥
+        return getAllClaimsFromToken(token).getSubject();
+    }
+    
+    /**
+     * 从JWT中提取所有声明
+     * @param token JWT字符串
+     * @return Claims对象
+     */
+    private Claims getAllClaimsFromToken(String token) {
+        return Jwts.parser()
+                .setSigningKey(key)
                 .build()
-                .parseClaimsJws(token)//解析JWT令牌
-                .getBody()//获取JWT令牌中的内容
-                .getSubject();//获取用户名
+                .parseClaimsJws(token)
+                .getBody();
     }
     /**
      * 验证JWT令牌是否有效
@@ -67,13 +76,7 @@ public class JwtUtil {
      * @return true表示令牌有效，false表示令牌无效
      */
     public boolean isTokenExpired(String token) {
-        return Jwts.parserBuilder()
-                .setSigningKey(key)//设置密钥
-                .build()
-                .parseClaimsJws(token)//解析JWT令牌
-                .getBody()//获取JWT令牌中的内容
-                .getExpiration()//获取令牌过期时间
-                .before(new Date());//判断令牌是否过期
+        return getAllClaimsFromToken(token).getExpiration().before(new Date());
     }
     /**
      * 验证JWT是否有效

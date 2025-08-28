@@ -8,7 +8,24 @@ spring:
     url: jdbc:mysql://localhost:3307/ecommerce_user?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai
     username: root
     password: 123456
-    driver-class-name: com.mysql.jdbc.Driver
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  mail:
+    host: smtp.qq.com
+    port: 587
+    username: 1758006511@qq.com  # 替换为你的QQ邮箱
+    password: whciopkjpjxxddaj  # 替换为你的QQ邮箱授权码
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+  data:
+    redis:
+      host: localhost
+      port: 6379
+  main:
+    allow-circular-references: true
 
 mybatis-plus:
     mapper-locations: classpath*:mapper/*.xml
@@ -19,3 +36,7 @@ mybatis-plus:
 app:
   jwt:
       secret: C#fB&v2@zL8qR9pW*sE$hN7gY!uM4jK3aG6dF5tH2bV1nJ0cZ_xL-kP+oI>uY<t
+
+logging:
+  level:
+    org.springframework.security: DEBUG
