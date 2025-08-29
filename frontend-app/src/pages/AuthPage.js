@@ -32,7 +32,7 @@ function AuthPage() {
     // 多语言文本
     const translations = {
         zh: {
-            pageTitle: '电商平台项目',
+            pageTitle: '筑家智选|大型家居购物平台',
             login: '登录',
             register: '注册',
             username: '用户名',
@@ -66,7 +66,7 @@ function AuthPage() {
             resendCode: (seconds) => `${seconds}秒后重新发送`
         },
         en: {
-            pageTitle: 'E-commerce Platform',
+            pageTitle: 'Zhujiaz Smart Choice | Large Home Furnishing Shopping Platform',
             login: 'Login',
             register: 'Register',
             username: 'Username',
@@ -268,10 +268,10 @@ function AuthPage() {
             }}>
                 <div style={{ textAlign: 'center', padding: '20px' }}>
                     <h1 style={{ fontSize: '2.5rem', marginBottom: '10px' }}>
-                        {language === 'zh' ? '电商平台' : 'E-commerce Platform'}
+                        {language === 'zh' ? '筑家智选' : 'ZhuJia Smart Selection'}
                     </h1>
                     <p style={{ fontSize: '1.2rem' }}>
-                        {language === 'zh' ? '连接你我，共享美好' : 'Connecting you and me, sharing the wonderfulness'}
+                        {language === 'zh' ? '品质生活，智慧筑家' : 'Quality life, smart home construction'}
                     </p>
                 </div>
             </div>

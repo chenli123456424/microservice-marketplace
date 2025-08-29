@@ -1,42 +1,41 @@
 import './App.css';
-import {Routes, Route, Link, Outlet} from "react-router-dom";
+import {Routes, Route, Outlet} from "react-router-dom";
 import AuthPage from "./pages/AuthPage";
 import ForgotPassword from "./pages/ForgotPassword";
 import HomePage from "./pages/HomePage";
 import {AuthProvider, useAuth} from "./context/AuthContext";
-
-function Navbar() {
-    const { isAuthenticated, logout } = useAuth();
-    return (
-        <nav>
-            <Link to="/">首页</Link> |{' '}
-            {isAuthenticated ? (
-                //如果已登录，显示登出按钮
-                <>
-                    <button onClick={logout}>登出</button>
-                </>
-            ): (
-                    //否则显示登录和注册按钮
-                    <>
-                        <Link to="/auth">登录/注册</Link>
-                    </>
-            )}
-        </nav>
-    );
-}
+import TopNavigation from "./components/TopNavigation";
 
 function App() {
   return (
       <div className="App">
           <AuthProvider>
               <Routes>
-                  {/*首页*/}
-                  <Route path="/" element={<Layout/>}>
+                  {/*首页和相关页面显示导航栏*/}
+                  <Route path="/" element={<LayoutWithNav/>}>
                       <Route index element={<HomePage/>}/>
+                      {/* 全屋定制 */}
+                      <Route path="/custom" element={<div>全屋定制页面</div>} />
+                      {/* 设计师 */}
+                      <Route path="/designers" element={<div>设计师页面</div>} />
+                      {/* 线下门店 */}
+                      <Route path="/stores" element={<div>线下门店页面</div>} />
+                      {/* 服务中心 */}
+                      <Route path="/service" element={<div>服务中心页面</div>} />
+                      {/* 社区/灵感 */}
+                      <Route path="/community" element={<div>社区/灵感页面</div>} />
+                      {/* 我的订单 */}
+                      <Route path="/orders" element={<div>我的订单页面</div>} />
+                      {/* 我的优惠券 */}
+                      <Route path="/coupons" element={<div>我的优惠券页面</div>} />
+                      {/* 个人信息 */}
+                      <Route path="/profile" element={<div>个人信息页面</div>} />
+                      {/* 购物车 */}
+                      <Route path="/cart" element={<div>购物车页面</div>} />
                   </Route>
-                  {/*登录和注册*/}
+                  
+                  {/*登录和注册相关页面不显示导航栏*/}
                   <Route path="/auth" element={<AuthPage/>}/>
-                  {/*忘记密码*/}
                   <Route path="/forgot-password" element={<ForgotPassword/>}/>
               </Routes>
           </AuthProvider>
@@ -44,12 +43,14 @@ function App() {
   );
 }
 
-function Layout() {
+function LayoutWithNav() {
     return (
-        <div className="container">
-            <Navbar/>
-            <Outlet/>
-        </div>
+        <>
+            <TopNavigation />
+            <div className="container">
+                <Outlet/>
+            </div>
+        </>
     );
 }
 
