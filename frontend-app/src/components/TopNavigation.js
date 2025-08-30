@@ -3,36 +3,11 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 function TopNavigation() {
-    const [isCategoryMenuOpen, setIsCategoryMenuOpen] = useState(false);
     const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
     const [isCartMenuOpen, setIsCartMenuOpen] = useState(false);
     
     const { isAuthenticated, logout } = useAuth();
     const navigate = useNavigate();
-
-    // 模拟商品分类数据
-    const categories = [
-        {
-            id: 1,
-            name: '全屋家具',
-            subcategories: ['客厅家具', '卧室家具', '餐厅家具', '书房家具', '儿童家具']
-        },
-        {
-            id: 2,
-            name: '家装建材',
-            subcategories: ['地板', '瓷砖', '涂料', '五金', '灯具']
-        },
-        {
-            id: 3,
-            name: '厨卫用品',
-            subcategories: ['厨房电器', '卫浴设备', '橱柜', '水槽', '龙头']
-        },
-        {
-            id: 4,
-            name: '软装饰品',
-            subcategories: ['窗帘', '地毯', '墙纸', '装饰画', '绿植']
-        }
-    ];
 
     const handleLogout = () => {
         logout();
@@ -74,84 +49,15 @@ function TopNavigation() {
                     alignItems: 'center',
                     flexGrow: 1
                 }}>
-                    {/* 产品分类下拉菜单 */}
-                    <div 
-                        style={{ 
-                            position: 'relative',
-                            marginRight: '20px'
-                        }}
-                        onMouseEnter={() => setIsCategoryMenuOpen(true)}
-                        onMouseLeave={() => setIsCategoryMenuOpen(false)}
-                    >
-                        <button
-                            style={{
-                                background: 'none',
-                                border: 'none',
-                                padding: '10px 15px',
-                                cursor: 'pointer',
-                                fontWeight: 'bold',
-                                color: '#ffffff',
-                                fontSize: '14px',
-                                lineHeight: '1.5',
-                                transition: 'color 0.3s ease'
-                            }}
-                        >
-                            产品分类
-                            <span style={{ marginLeft: '5px' }}>▼</span>
-                        </button>
-                        
-                        {isCategoryMenuOpen && (
-                            <div style={{
-                                position: 'absolute',
-                                top: '100%',
-                                left: 0,
-                                backgroundColor: '#fff',
-                                boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-                                minWidth: '200px',
-                                zIndex: 1001,
-                                border: '1px solid #e5e5e5'
-                            }}>
-                                {categories.map(category => (
-                                    <div key={category.id} style={{ position: 'relative' }}>
-                                        <div style={{
-                                            padding: '12px 20px',
-                                            fontWeight: 'bold',
-                                            borderBottom: '1px solid #eee',
-                                            cursor: 'pointer',
-                                            color: '#000000',
-                                            fontSize: '14px'
-                                        }}>
-                                            {category.name}
-                                        </div>
-                                        <div style={{
-                                            position: 'absolute',
-                                            left: '100%',
-                                            top: 0,
-                                            backgroundColor: '#fff',
-                                            boxShadow: '2px 4px 6px rgba(0,0,0,0.1)',
-                                            minWidth: '150px',
-                                            display: 'none'
-                                        }}>
-                                            {category.subcategories.map((sub, index) => (
-                                                <Link 
-                                                    key={index}
-                                                    to={`/category/${category.id}/subcategory/${index}`}
-                                                    style={{
-                                                        display: 'block',
-                                                        padding: '10px 20px',
-                                                        textDecoration: 'none',
-                                                        color: '#000000',
-                                                        borderBottom: '1px solid #eee'
-                                                    }}
-                                                >
-                                                    {sub}
-                                                </Link>
-                                            ))}
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
+                    {/* 品牌名称 */}
+                    <div style={{
+                        fontWeight: 'bold',
+                        color: '#ffffff',
+                        fontSize: '20px',
+                        marginRight: '30px',
+                        fontFamily: 'Arial, sans-serif'
+                    }}>
+                        筑家智选
                     </div>
 
                     {/* 其他导航项 */}
