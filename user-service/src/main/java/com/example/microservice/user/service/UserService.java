@@ -1,8 +1,13 @@
 package com.example.microservice.user.service;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.example.microservice.user.entity.User;
 import org.springframework.security.core.userdetails.UserDetailsService;
+
+import java.util.List;
 
 /**
  * 用户服务接口
@@ -57,6 +62,14 @@ public interface UserService extends IService<User>, UserDetailsService {
      * @return 重置是否成功
      */
     boolean resetPassword(String email, String code, String newPassword);
+
+    /**
+     * 根据条件分页查询用户
+     * @param page 分页对象
+     * @param queryWrapper 查询条件
+     * @return 分页结果
+     */
+    IPage<User> page(Page<User> page, QueryWrapper<User> queryWrapper);
 
 }
 

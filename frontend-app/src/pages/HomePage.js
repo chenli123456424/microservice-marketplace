@@ -1,40 +1,11 @@
 import React, {useEffect, useRef, useState} from 'react';
 import CategoryProductSection from '../components/CategoryProductSection';
+import RightSidebar from '../components/RightSidebar';
+import MainContentSection from '../components/MainContentSection';
+import RecommendedProductsSection from '../components/RecommendedProductsSection';
+import FooterSection from '../components/FooterSection';
 
 function HomePage() {
-    const [activeCategory, setActiveCategory] = useState('全屋家具');
-    const [isHovered, setIsHovered] = useState(false);
-    const [currentSlide, setCurrentSlide] = useState(0);
-    const [hoveredSubcategory, setHoveredSubcategory] = useState(null);
-    const [isPaused, setIsPaused] = useState(false);
-    const [activeItem, setActiveItem] = useState(null);
-
-    const intervalRef = useRef(null);
-
-    // 轮播图图片列表（后续可扩展）
-    const slides = [
-        '/images/全屋家具.jpg',
-        '/images/家装建材.png', // 示例
-        '/images/厨卫用品.png', // 示例
-        '/images/门窗五金.png', // 示例
-        '/images/灯具照明.png'  // 示例
-    ];
-
-    // 自动轮播：每5秒切换一张
-    useEffect(() => {
-        if (!isPaused) {
-            intervalRef.current = setInterval(() => {
-                setCurrentSlide((prev) => (prev + 1) % slides.length);
-            }, 5000);
-        }
-
-        return () => {
-            if (intervalRef.current) {
-                clearInterval(intervalRef.current);
-            }
-        };
-    }, [isPaused, slides.length]);
-
     // 产品分类数据
     const categories = [
         {
@@ -154,12 +125,6 @@ function HomePage() {
         }
     ];
 
-    useEffect(() => {
-        if (hoveredSubcategory) {
-            setActiveItem(hoveredSubcategory.items[0].name); // 默认选中第一个二级分类
-        }
-    }, [hoveredSubcategory]);
-
     // 响应式处理
     const [windowWidth, setWindowWidth] = useState(window.innerWidth);
 
@@ -176,424 +141,23 @@ function HomePage() {
         return 'repeat(5, 1fr)';                         // 大屏显示5列
     };
 
-    // 价格生成函数
-    const generatePrice = (itemName) => {
-        const hash = itemName.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-        return (hash % 1000) + 100; // 价格范围 100-1100
-    };
-
-    // 获取当前激活的子分类
-    const getCurrentSubcategory = () => {
-        if (!hoveredSubcategory || !activeItem) return null;
-        return hoveredSubcategory.items.find(item => item.name === activeItem);
-    };
-
-    const currentSubcategory = getCurrentSubcategory();
-
     return (
         <div className="content">
             <div style={{
                 backgroundColor: '#fafafa',
-                padding: '30px 250px',
-                borderBottom: '2px solid #e0e0e0'// 页面内容区域
+                padding: '40px 250px',
             }}>
+                {/* 右侧边功能信息栏 */}
+                <RightSidebar />
                 {/* 主要内容区域 */}
-                <div style={{
-                    position: 'relative',
-                    width: '100%',
-                    height: '800px',
-                    overflow: 'hidden'
-                }}
-                     onMouseEnter={() => setIsPaused(true)} // 鼠标悬停时暂停
-                     onMouseLeave={() => setIsPaused(false)} // 鼠标离开时恢复
-                >
-                    {/* 轮播图区域（全屏覆盖） - 叠化版本 */}
-                    <div style={{
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        width: '100%',
-                        height: '110%',
-                        zIndex: 1,
-                        background: '#f0f0f0'
-                    }}>
-                        {slides.map((slide, index) => (
-                            <img
-                                key={index}
-                                src={slide}
-                                alt={`轮播图 ${index + 1}`}
-                                loading="lazy" // 图片懒加载
-                                style={{
-                                    position: 'absolute',
-                                    top: 0,
-                                    left: 0,
-                                    width: '100%',
-                                    height: '100%',
-                                    objectFit: 'cover',
-                                    opacity: index === currentSlide ? 1 : 0,
-                                    transition: 'opacity 1s ease-in-out'
-                                }}
-                            />
-                        ))}
-                    </div>
-
-                    {/* 左右箭头按钮 */}
-                    <button
-                        onClick={() => setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length)}
-                        style={{
-                            position: 'absolute',
-                            left: '300px',
-                            top: '50%',
-                            transform: 'translateY(-50%)',
-                            background: 'rgba(0, 0, 0, 0.3)',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '50%',
-                            width: '40px',
-                            height: '40px',
-                            fontSize: '20px',
-                            cursor: 'pointer',
-                            zIndex: 11,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center'
-                        }}
-                    >
-                        &#8249;
-                    </button>
-                    <button
-                        onClick={() => setCurrentSlide((prev) => (prev + 1) % slides.length)}
-                        style={{
-                            position: 'absolute',
-                            right: '20px',
-                            top: '50%',
-                            transform: 'translateY(-50%)',
-                            background: 'rgba(0, 0, 0, 0.3)',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '50%',
-                            width: '40px',
-                            height: '40px',
-                            fontSize: '20px',
-                            cursor: 'pointer',
-                            zIndex: 11,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center'
-                        }}
-                    >
-                        &#8250;
-                    </button>
-
-                    {/* 轮播指示器（右下角） */}
-                    <div style={{
-                        position: 'absolute',
-                        bottom: '20px',
-                        right: '20px',
-                        display: 'flex',
-                        gap: '8px',
-                        zIndex: 10 // 提高 z-index 确保可见
-                    }}>
-                        {slides.map((_, index) => (
-                            <button
-                                key={index}
-                                onClick={() => setCurrentSlide(index)}
-                                style={{
-                                    width: '10px',
-                                    height: '10px',
-                                    borderRadius: '50%',
-                                    backgroundColor: currentSlide === index ? '#e64340' : '#ccc',
-                                    border: 'none',
-                                    cursor: 'pointer',
-                                    transition: 'background-color 0.3s'
-                                }}
-                            />
-                        ))}
-                    </div>
-
-                    {/* 左侧导航区域 */}
-                    <div
-                        style={{
-                            position: 'absolute',
-                            top: 0,
-                            left: 0,
-                            width: '20%',
-                            height: '100%',
-                            backgroundColor: isHovered ? 'rgba(76,76,76,0.44)' : 'rgba(76,76,76,0.22)',// 背景颜色
-                            padding: '15px',
-                            transition: 'all 0.3s ease',
-                            zIndex: 2,
-                            boxShadow: isHovered ? '0 4px 12px rgba(0,0,0,0.2)' : 'none',
-                            overflow: 'hidden',
-                            borderRight: isHovered ? '1px solid #ccc' : 'none'
-                        }}
-                        onMouseEnter={() => setIsHovered(true)}
-                        onMouseLeave={() => setIsHovered(false)}
-                    >
-                        <h3 style={{
-                            fontSize: '22px',
-                            fontWeight: 'bold',
-                            marginBottom: '15px',
-                            color: '#fff',
-                            opacity: isHovered ? 1 : 0.8,
-                            transition: 'opacity 0.3s'
-                        }}>
-                            产品分类
-                        </h3>
-
-                        <div style={{
-                            maxHeight: 'calc(100% - 50px)',
-                            overflowY: 'auto',
-                            scrollbarWidth: 'thin',
-                            scrollbarColor: '#ccc transparent'
-                        }}>
-                            {categories.map(category => (
-                                <div key={category.id} style={{
-                                    marginBottom: '15px'
-                                }}>
-                                    <button
-                                        style={{
-                                            width: '100%',
-                                            padding: '12px 15px',
-                                            background: activeCategory === category.name ? '#e68b40' : 'transparent',
-                                            color: activeCategory === category.name ? 'white' : '#fff',
-                                            textAlign: 'left',
-                                            cursor: 'pointer',
-                                            fontSize: '18px',
-                                            fontWeight: activeCategory === category.name ? 'bold' : 'normal',
-                                            borderRadius: '4px',
-                                            transition: 'all 0.3s ease',
-                                            display: 'flex',
-                                            justifyContent: 'space-between',
-                                            alignItems: 'center',
-                                            marginBottom: '5px',
-                                            boxSizing: 'border-box',
-                                            minHeight: '40px',
-                                            border: activeCategory === category.name ? '1px solid #e68b40' : '1px solid transparent'
-                                        }}
-                                        onClick={() => {
-                                            setActiveCategory(category.name);
-                                            setHoveredSubcategory(category.subcategories[0]);
-                                        }}
-                                        onMouseEnter={() => {
-                                            if (activeCategory !== category.name) {
-                                                setActiveCategory(category.name);
-                                            }
-                                        }}
-                                    >
-                                        {category.name}
-                                        <span style={{fontSize: '12px', marginLeft: '8px'}}>></span>
-                                    </button>
-
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* 商品展示窗口（悬停时显示） */}
-                    {hoveredSubcategory && (
-                        <div
-                            style={{
-                                position: 'absolute',
-                                top: 0,
-                                left: '50%',
-                                transform: 'translateX(-50%)',
-                                width: '60%',
-                                height: '100%',
-                                backgroundColor: 'white',
-                                padding: '20px',
-                                zIndex: 100,
-                                overflow: 'auto',
-                                boxShadow: '0 0 10px rgba(0,0,0,0.1)',
-                                borderLeft: '1px solid #ddd'
-                            }}
-                            onMouseLeave={() => setHoveredSubcategory(null)}
-                        >
-                            {/* 一级标题 */}
-                            <h4 style={{
-                                fontSize: '16px',
-                                fontWeight: 'bold',
-                                marginBottom: '15px',
-                                color: '#333'
-                            }}>
-                                {hoveredSubcategory.name}
-                            </h4>
-
-                            {/* 二级分类 - 横向排列 */}
-                            <div style={{
-                                display: 'flex',
-                                gap: '10px',
-                                flexWrap: 'wrap',
-                                marginBottom: '20px'
-                            }}>
-                                {hoveredSubcategory.items.map(item => (
-                                    <button
-                                        key={item.id}
-                                        style={{
-                                            padding: '8px 12px',
-                                            background: activeItem === item.name ? '#f5f5f5' : 'transparent',
-                                            border: '1px solid #eee',
-                                            borderRadius: '4px',
-                                            fontSize: '12px',
-                                            cursor: 'pointer',
-                                            transition: 'all 0.3s',
-                                            whiteSpace: 'nowrap'
-                                        }}
-                                        onClick={() => setActiveItem(item.name)}
-                                    >
-                                        {item.name}
-                                    </button>
-                                ))}
-                            </div>
-
-                            {/* 三级商品 - 图片 + 名称 */}
-                            <div style={{
-                                display: 'grid',
-                                gridTemplateColumns: 'repeat(2, 1fr)', // 每行两个
-                                gap: '15px',
-                                width: '100%'
-                            }}>
-                                {currentSubcategory?.children?.map((child, index) => (
-                                    <div
-                                        key={child}
-                                        style={{
-                                            textAlign: 'center',
-                                            padding: '10px',
-                                            border: '1px solid #eee',
-                                            borderRadius: '8px',
-                                            transition: 'all 0.3s ease',
-                                            cursor: 'pointer',
-                                            backgroundColor: '#fff',
-                                            boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-                                            flex: '1',
-                                            minWidth: '150px' // 防止过窄
-                                        }}
-                                        onClick={() => alert(`跳转到 /product/${currentSubcategory.id}-${index}`)}
-                                        onMouseEnter={(e) => {
-                                            e.currentTarget.style.transform = 'translateY(-5px)';
-                                            e.currentTarget.style.boxShadow = '0 4px 8px rgba(0,0,0,0.15)';
-                                        }}
-                                        onMouseLeave={(e) => {
-                                            e.currentTarget.style.transform = 'translateY(0)';
-                                            e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
-                                        }}
-                                    >
-                                        {/* 使用 https://via.placeholder.com 生成占位图片 */}
-                                        <div style={{
-                                            width: '100%',
-                                            height: '100px',
-                                            backgroundImage: `url(https://via.placeholder.com/100x100?text=${encodeURIComponent(child)})`,
-                                            backgroundSize: 'cover',
-                                            backgroundPosition: 'center',
-                                            backgroundRepeat: 'no-repeat',
-                                            borderRadius: '4px',
-                                            margin: '0 auto 8px'
-                                        }}/>
-                                        <span style={{
-                                            fontSize: '12px',
-                                            color: '#333',
-                                            display: 'block',
-                                            fontWeight: '500'
-                                        }}>
-                                            {child}
-                                        </span>
-                                        {/* 移除价格显示 */}
-                                    </div>
-                                ))}
-                            </div>
-
-                        </div>
-                    )}
-                </div>
+                <MainContentSection categories={categories} />
                 {/* 推荐商品区域 - 使用占位图片和价格生成函数 */}
-                <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(4, 1fr)',
-                    gap: '20px',
-                    marginTop: '20px',
-                }}>
-                    {['热门推荐', '新品上市', '限时特惠', '爆款热销'].map((title, index) => (
-                        <div key={index} style={{
-                            backgroundColor: '#fff',
-                            borderRadius: '8px',
-                            padding: '20px',
-                            boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-                        }}>
-                            <h4 style={{
-                                fontSize: '16px',
-                                fontWeight: 'bold',
-                                marginBottom: '15px',
-                                color: '#333'
-                            }}>
-                                {title}
-                            </h4>
-                            <div style={{
-                                width: '100%',
-                                height: '150px',
-                                backgroundColor: '#f9f9f9',
-                                borderRadius: '8px',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                position: 'relative',
-                                overflow: 'hidden'
-                            }}>
-                                {/* 使用背景图方式展示占位图片 */}
-                                <div style={{
-                                    width: '100%',
-                                    height: '100%',
-                                    backgroundImage: `url(https://via.placeholder.com/300x200?text=${encodeURIComponent(title)})`,
-                                    backgroundSize: 'cover',
-                                    backgroundPosition: 'center',
-                                    backgroundRepeat: 'no-repeat'
-                                }}/>
-                                {/* 添加文字标签 */}
-                                <div style={{
-                                    position: 'absolute',
-                                    top: '10px',
-                                    left: '10px',
-                                    backgroundColor: 'rgba(0,0,0,0.7)',
-                                    color: 'white',
-                                    padding: '4px 8px',
-                                    borderRadius: '4px',
-                                    fontSize: '12px'
-                                }}>
-                                    {title}
-                                </div>
-                            </div>
-                            <div style={{
-                                marginTop: '15px',
-                                display: 'flex',
-                                justifyContent: 'space-between',
-                                alignItems: 'center'
-                            }}>
-                                    <span style={{
-                                        color: '#e64340',
-                                        fontWeight: 'bold'
-                                    }}>
-                                        ¥{generatePrice(title)}
-                                    </span>
-                                <button style={{
-                                    backgroundColor: '#e64340',
-                                    color: 'white',
-                                    border: 'none',
-                                    padding: '6px 12px',
-                                    borderRadius: '4px',
-                                    cursor: 'pointer',
-                                    fontSize: '12px'
-                                }}>
-                                    立即购买
-                                </button>
-                            </div>
-                        </div>
-                    ))}
-                </div>
+                <RecommendedProductsSection />
             </div>
 
             <div style={{
-                backgroundColor: 'rgb(244,244,244)',
-                padding: '15px 0',
-                borderBottom: '2px solid #e0e0e0',
+                backgroundColor: 'rgb(239,239,239)',
+                padding: '30px 0',
                 marginBottom: '20px'
             }}>
                 {/* 商品系列展示 - 小米商城风格 */}
@@ -629,6 +193,8 @@ function HomePage() {
                     ))}
                 </div>
             </div>
+            {/* 底部导航栏 */}
+            <FooterSection />
         </div>
     );
 }

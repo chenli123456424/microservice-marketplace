@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.microservice.user.mapper.ProductMapper">
+
+    <!-- 根据筛选条件查询商品 -->
+    <select id="getProductsByFilter" resultType="com.example.microservice.user.entity.Product">
+        SELECT * FROM product WHERE status = 1
+        <if test="mainId != null">
+            AND main_id = #{mainId}
+        </if>
+        <if test="subId != null">
+            AND sub_id = #{subId}
+        </if>
+        <!-- 动态筛选条件 -->
+        <if test="attrs != null and !attrs.isEmpty()">
+            AND product_id IN (
+            SELECT product_id FROM product_extend_attr WHERE
+            <foreach collection="attrs" item="attr" separator=" AND product_id IN (SELECT product_id FROM product_extend_attr WHERE ">
+                attr_key = #{attr.attrKey} AND attr_value = #{attr.attrValue}
+            </foreach>
+            <foreach collection="attrs" item="attr" separator="">
+                )
+            </foreach>
+            )
+        </if>
+    </select>
+</mapper>

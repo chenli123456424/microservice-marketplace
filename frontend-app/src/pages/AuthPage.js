@@ -17,7 +17,8 @@ function AuthPage() {
     const [registerData, setRegisterData] = useState({
         username: '',
         email: '',
-        password: ''
+        password: '',
+        role: 'USER' // 添加默认角色
     });
     // 控制验证码倒计时
     const [countdown, setCountdown] = useState(0);
@@ -292,15 +293,26 @@ function AuthPage() {
                     padding: '20px 40px',
                     alignItems: 'center'
                 }}>
-                    <h2 style={{ margin: 0, color: '#333' }}>{t('pageTitle')}</h2>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <img src="/images/logo.png" alt="电商平台Logo"
+                             style={{ height: '45px', width: 'auto' }} />
+                        <h2 style={{ margin: 0, color: '#333', fontSize: '1.5rem' }}>{t('pageTitle')}</h2>
+                    </div>
+
                     <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-                        <a
-                            href="#"
-                            onClick={(e) => { e.preventDefault(); alert(language === 'zh' ? '帮助中心功能待实现' : 'Help center feature to be implemented'); }}
-                            style={{ textDecoration: 'none', color: '#007bff' }}
+                        <button
+                            onClick={() => alert(language === 'zh' ? '帮助中心功能待实现' : 'Help center feature to be implemented')}
+                            style={{
+                                background: 'none',
+                                border: 'none',
+                                color: '#007bff',
+                                textDecoration: 'underline',
+                                cursor: 'pointer',
+                                fontSize: 'inherit'
+                            }}
                         >
                             {t('helpCenter')}
-                        </a>
+                        </button>
                         <div style={{ position: 'relative' }}>
                             <select
                                 value={language}
@@ -549,12 +561,12 @@ function AuthPage() {
                                             onChange={handleRegisterChange}
                                             style={{
                                                 width: '100%',
-                                                padding: '15px', // 加大内边距
+                                                padding: '15px',
                                                 border: '1px solid #ddd',
                                                 borderRadius: '4px',
                                                 boxSizing: 'border-box',
-                                                fontSize: '20px', // 放大字体
-                                                height: '65px' // 加高输入框
+                                                fontSize: '20px',
+                                                height: '65px'
                                             }}
                                             required
                                         />
@@ -568,12 +580,12 @@ function AuthPage() {
                                             onChange={handleRegisterChange}
                                             style={{
                                                 width: '100%',
-                                                padding: '15px', // 加大内边距
+                                                padding: '15px',
                                                 border: '1px solid #ddd',
                                                 borderRadius: '4px',
                                                 boxSizing: 'border-box',
-                                                fontSize: '20px', // 放大字体
-                                                height: '65px' // 加高输入框
+                                                fontSize: '20px',
+                                                height: '65px'
                                             }}
                                             required
                                         />
@@ -587,28 +599,56 @@ function AuthPage() {
                                             onChange={handleRegisterChange}
                                             style={{
                                                 width: '100%',
-                                                padding: '15px', // 加大内边距
+                                                padding: '15px',
                                                 border: '1px solid #ddd',
                                                 borderRadius: '4px',
                                                 boxSizing: 'border-box',
-                                                fontSize: '20px', // 放大字体
-                                                height: '65px' // 加高输入框
+                                                fontSize: '20px',
+                                                height: '65px'
                                             }}
                                             required
                                         />
+                                    </div>
+                                    {/* 添加角色选择 */}
+                                    <div style={{ marginBottom: '20px', width: '100%' }}>
+                                        <select
+                                            name="role"
+                                            value={registerData.role}
+                                            onChange={handleRegisterChange}
+                                            style={{
+                                                width: '100%',
+                                                padding: '15px',
+                                                border: '1px solid #ddd',
+                                                borderRadius: '4px',
+                                                boxSizing: 'border-box',
+                                                fontSize: '20px',
+                                                height: '65px',
+                                                backgroundColor: 'white'
+                                            }}
+                                        >
+                                            <option value="USER">
+                                                {language === 'zh' ? '普通用户' : 'Regular User'}
+                                            </option>
+                                            <option value="MERCHANT">
+                                                {language === 'zh' ? '商家' : 'Merchant'}
+                                            </option>
+                                            <option value="SUPER_ADMIN">
+                                                {language === 'zh' ? '超级管理员' : 'Super Admin'}
+                                            </option>
+                                        </select>
                                     </div>
                                     <button
                                         type="submit"
                                         style={{
                                             width: '100%',
-                                            padding: '15px', // 加大内边距
+                                            padding: '15px',
                                             backgroundColor: '#28a745',
                                             color: 'white',
                                             border: 'none',
                                             borderRadius: '4px',
                                             cursor: 'pointer',
-                                            fontSize: '20px', // 放大字体
-                                            height: '65px' // 加高按钮
+                                            fontSize: '20px',
+                                            height: '65px'
                                         }}
                                     >
                                         {t('registerButton')}

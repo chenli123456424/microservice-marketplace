@@ -1,6 +1,8 @@
 package com.example.microservice.user.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.example.microservice.user.entity.User;
 import com.example.microservice.user.mapper.UserMapper;
@@ -12,13 +14,16 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -53,20 +58,13 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Override
     public User register(User user) {
         // 1. 检查用户名是否已存在
-        // 创建一个查询条件包装器
         QueryWrapper<User> queryWrapper = new QueryWrapper<>();
-        // 添加查询条件
         queryWrapper.eq("username", user.getUsername());
-        // baseMapper就是从ServiceImpl继承过来的UserMapper的实例
         Long count = baseMapper.selectCount(queryWrapper);
-        //如果count>0，则表示用户名已存在
         if (count > 0) {
             throw new RuntimeException("用户名已存在");
         }
-        // 密码加密
-        String encodedPassword = passwordEncoder.encode(user.getPassword());
-        user.setPassword(encodedPassword);
-
+        
         // 2. 检查邮箱是否已存在
         queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("email", user.getEmail());
@@ -75,8 +73,16 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             throw new RuntimeException("邮箱已存在");
         }
 
-        // 3. 如果用户名和邮箱都不存在，则插入用户数据
-        //this.save()是ServiceImpl继承的方法，它内部会调用baseMapper.insert()方法
+        // 3. 设置默认角色（如果未提供）
+        if (user.getRole() == null || user.getRole().trim().isEmpty()) {
+            user.setRole("USER"); // 默认角色为普通用户
+        }
+
+        // 4. 密码加密
+        String encodedPassword = passwordEncoder.encode(user.getPassword());
+        user.setPassword(encodedPassword);
+
+        // 5. 插入用户数据
         this.save(user);
         return user;
     }
@@ -239,6 +245,18 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     }
 
     /**
+     * 根据条件分页查询用户
+     * @param page 分页对象
+     * @param queryWrapper 查询条件
+     * @return 分页结果
+     */
+    @Override
+    public IPage<User> page(Page<User> page, QueryWrapper<User> queryWrapper) {
+        // 使用父类的page方法进行分页查询
+        return baseMapper.selectPage(page, queryWrapper);
+    }
+
+    /**
      * 这是 UserDetailsService 接口要求实现的方法
      * Spring Security 在进行认证时会调用这个方法来加载用户信息
      */
@@ -261,14 +279,32 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             throw new UsernameNotFoundException("用户不存在");
         }
 
-        // 3.如果用户存在，将我们的 User 对象转换成 Spring Security 能识别的 UserDetails 对象
-        //    org.springframework.security.core.userdetails.User
-        //    构造函数需要：用户名、密码(已加密的)、权限集合
-        //    我们暂时不涉及复杂的角色权限，所以给一个空的权限集合
+        // 3.根据用户角色设置权限
+        List<SimpleGrantedAuthority> authorities = new ArrayList<>();
+        
+        // 添加基于角色的权限
+        switch (user.getRole()) {
+            case "SUPER_ADMIN":
+                authorities.add(new SimpleGrantedAuthority("ROLE_SUPER_ADMIN"));
+                authorities.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
+                authorities.add(new SimpleGrantedAuthority("ROLE_MERCHANT"));
+                authorities.add(new SimpleGrantedAuthority("ROLE_USER"));
+                break;
+            case "MERCHANT":
+                authorities.add(new SimpleGrantedAuthority("ROLE_MERCHANT"));
+                authorities.add(new SimpleGrantedAuthority("ROLE_USER"));
+                break;
+            case "USER":
+            default:
+                authorities.add(new SimpleGrantedAuthority("ROLE_USER"));
+                break;
+        }
+
+        // 4.将我们的 User 对象转换成 Spring Security 能识别的 UserDetails 对象
         return new org.springframework.security.core.userdetails.User(
                 user.getUsername(),
                 user.getPassword(),
-                Collections.emptyList()
+                authorities
         );
     }
 }

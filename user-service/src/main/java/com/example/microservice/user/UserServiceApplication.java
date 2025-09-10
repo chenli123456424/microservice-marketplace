@@ -15,12 +15,11 @@ import java.util.TimeZone;
  * @MapperScan: 扫描mapper接口所在的包
  */
 @SpringBootApplication
-@MapperScan("com.example.microservice.user.mapper")// 扫描mapper接口所在的包
+@MapperScan("com.example.microservice.user.mapper")
 public class UserServiceApplication {
+
     public static void main(String[] args) {
-        //设置时区
-        TimeZone.setDefault(TimeZone.getTimeZone("Asia/Shanghai"));
-        // 启动Spring Boot项目
         SpringApplication.run(UserServiceApplication.class, args);
     }
+
 }
