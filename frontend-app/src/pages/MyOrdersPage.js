@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
@@ -9,11 +9,18 @@ import './MyOrdersPage.css';
 const MyOrdersPage = () => {
     const navigate = useNavigate();
     const { isAuthenticated, token } = useAuth();
+    const ordersContentRef = useRef(null);
+    const isInitialMount = useRef(true);
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('all');
     const [searchKeyword, setSearchKeyword] = useState('');
     const [filteredOrders, setFilteredOrders] = useState([]);
+    
+    // 分页相关状态
+    const [currentPage, setCurrentPage] = useState(1);
+    const [pageSize, setPageSize] = useState(10);
+    const [totalPages, setTotalPages] = useState(0);
 
     // 订单状态映射
     const orderStatusMap = {
@@ -36,8 +43,8 @@ const MyOrdersPage = () => {
         1: { text: '已发货', color: '#52c41a' }
     };
 
-    // 获取订单列表
-    const fetchOrders = async () => {
+    // 获取订单列表（可指定过滤标签）
+    const fetchOrders = async (tabForFilter) => {
         if (!isAuthenticated || !token) {
             setLoading(false);
             return;
@@ -56,10 +63,13 @@ const MyOrdersPage = () => {
             console.log('MyOrdersPage: 订单API响应:', response.data);
             
             if (response.data.code === 200) {
-                const orders = response.data.data || [];
-                console.log('MyOrdersPage: 获取到订单数量:', orders.length);
-                setOrders(orders);
-                setFilteredOrders(orders);
+                const newOrders = response.data.data || [];
+                console.log('MyOrdersPage: 获取到订单数量:', newOrders.length);
+                setOrders(newOrders);
+                // 按当前活动标签或外部传入的标签进行过滤，保证刷新后仍停留在当前分栏
+                const tabToUse = tabForFilter || activeTab;
+                const filtered = filterOrdersByTab(newOrders, tabToUse);
+                setFilteredOrders(filtered);
             } else {
                 console.error('MyOrdersPage: API返回错误:', response.data.message);
             }
@@ -76,6 +86,33 @@ const MyOrdersPage = () => {
     useEffect(() => {
         fetchOrders();
     }, [isAuthenticated, token]);
+
+    // 计算总页数
+    useEffect(() => {
+        const total = Math.ceil(filteredOrders.length / pageSize);
+        setTotalPages(total);
+        // 如果当前页超过总页数，重置到第一页
+        if (currentPage > total && total > 0) {
+            setCurrentPage(1);
+        }
+    }, [filteredOrders, pageSize, currentPage]);
+
+    // 页码变化时滚动到顶部
+    useEffect(() => {
+        // 跳过初次加载
+        if (isInitialMount.current) {
+            isInitialMount.current = false;
+            return;
+        }
+        
+        // 使用 setTimeout 确保在 DOM 更新后执行滚动
+        const timer = setTimeout(() => {
+            scrollToTop();
+        }, 50);
+        
+        return () => clearTimeout(timer);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [currentPage]);
 
     // 根据标签页过滤订单
     const filterOrdersByTab = (orders, tab) => {
@@ -114,8 +151,45 @@ const MyOrdersPage = () => {
     // 处理标签页切换
     const handleTabChange = (tab) => {
         setActiveTab(tab);
-        const filtered = filterOrdersByTab(orders, tab);
-        setFilteredOrders(filtered);
+        setCurrentPage(1); // 切换标签页时重置到第一页
+        // 点击分栏时立即刷新并应用对应过滤
+        fetchOrders(tab);
+    };
+
+    // 获取当前页的订单数据
+    const getCurrentPageOrders = () => {
+        const startIndex = (currentPage - 1) * pageSize;
+        const endIndex = startIndex + pageSize;
+        return filteredOrders.slice(startIndex, endIndex);
+    };
+
+    // 滚动到顶部的函数
+    const scrollToTop = () => {
+        // 滚动到订单内容区域顶部
+        if (ordersContentRef.current) {
+            const headerOffset = 100; // 预留顶部导航栏的高度
+            const elementPosition = ordersContentRef.current.getBoundingClientRect().top;
+            const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+            
+            window.scrollTo({
+                top: offsetPosition,
+                behavior: 'smooth'
+            });
+        } else {
+            // 如果引用不存在，回退到滚动到页面顶部
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    };
+
+    // 切换页码
+    const handlePageChange = (page) => {
+        setCurrentPage(page);
+    };
+
+    // 切换每页显示数量
+    const handlePageSizeChange = (size) => {
+        setPageSize(size);
+        setCurrentPage(1); // 重置到第一页
     };
 
     // 格式化时间
@@ -164,7 +238,8 @@ const MyOrdersPage = () => {
                             orderStatus === 1 ? '订单取消成功！' : '退款申请已提交！',
                             '操作成功'
                         );
-                        fetchOrders(); // 刷新订单列表
+                        // 刷新并保持当前分栏
+                        fetchOrders(activeTab);
                     } else {
                         modalService.error(
                             response.data.message || '操作失败',
@@ -186,6 +261,87 @@ const MyOrdersPage = () => {
         );
     };
 
+    // 立即付款
+    const handlePayNow = async (order) => {
+        const amountText = typeof order.payAmount !== 'undefined' ? `¥${parseFloat(order.payAmount).toFixed(2)}` : '';
+        modalService.confirm(
+            `确认支付 ${amountText} 吗？`,
+            '支付确认',
+            async () => {
+                try {
+                    const response = await axios.put(
+                        `http://localhost:8081/api/orders/${order.orderId}/pay-status`,
+                        {
+                            payStatus: 1,
+                            payMethod: 'alipay'
+                        },
+                        {
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${token}`
+                            }
+                        }
+                    );
+                    if (response.data.code === 200) {
+                        modalService.success('支付成功！', '成功');
+                        // 支付成功后刷新并保持当前分栏
+                        fetchOrders(activeTab);
+                    } else {
+                        modalService.error(response.data.message || '支付失败', '错误');
+                    }
+                } catch (error) {
+                    console.error('支付失败:', error);
+                    modalService.error('支付失败，请稍后重试', '错误');
+                }
+            },
+            () => {}
+        );
+    };
+
+    // 处理确认收货
+    const handleConfirmReceipt = async (orderId) => {
+        modalService.confirm(
+            '确认已收到商品吗？确认后订单将进入待评价状态。',
+            '确认收货',
+            async () => {
+                try {
+                    const response = await axios.put(
+                        `http://localhost:8081/api/orders/${orderId}/confirm-receipt`,
+                        null,
+                        {
+                            headers: {
+                                'Authorization': `Bearer ${token}`
+                            }
+                        }
+                    );
+                    
+                    if (response.data.code === 200) {
+                        modalService.success(
+                            '收货确认成功！',
+                            '操作成功'
+                        );
+                        // 刷新并保持当前分栏
+                        fetchOrders(activeTab);
+                    } else {
+                        modalService.error(
+                            response.data.message || '操作失败',
+                            '操作失败'
+                        );
+                    }
+                } catch (error) {
+                    console.error('确认收货失败:', error);
+                    modalService.error(
+                        '操作失败，请稍后重试',
+                        '错误'
+                    );
+                }
+            },
+            () => {
+                console.log('用户取消确认收货');
+            }
+        );
+    };
+
     // 获取订单操作按钮
     const getOrderActions = (order) => {
         const actions = [];
@@ -200,7 +356,7 @@ const MyOrdersPage = () => {
                     >
                         取消订单
                     </button>,
-                    <button key="pay" className="order-action-btn primary-btn">
+                    <button key="pay" className="order-action-btn primary-btn" onClick={() => handlePayNow(order)}>
                         立即付款
                     </button>
                 );
@@ -224,7 +380,11 @@ const MyOrdersPage = () => {
                     <button key="track" className="order-action-btn secondary-btn">
                         查看物流
                     </button>,
-                    <button key="confirm" className="order-action-btn primary-btn">
+                    <button 
+                        key="confirm" 
+                        className="order-action-btn primary-btn"
+                        onClick={() => handleConfirmReceipt(order.orderId)}
+                    >
                         确认收货
                     </button>
                 );
@@ -353,7 +513,7 @@ const MyOrdersPage = () => {
                 </div>
             </div>
 
-            <div className="orders-content">
+            <div className="orders-content" ref={ordersContentRef}>
                 {loading ? (
                     <div className="loading-container">
                         <div className="loading-spinner"></div>
@@ -366,8 +526,9 @@ const MyOrdersPage = () => {
                         <p>快去选购心仪的商品吧！</p>
                     </div>
                 ) : (
-                    <div className="orders-list">
-                        {filteredOrders.map((order) => (
+                    <>
+                        <div className="orders-list">
+                            {getCurrentPageOrders().map((order) => (
                             <div key={order.orderId} className="order-card">
                                 <div className="order-header">
                                     <div className="order-info">
@@ -449,7 +610,105 @@ const MyOrdersPage = () => {
                                 </div>
                             </div>
                         ))}
-                    </div>
+                        </div>
+
+                        {/* 分页控制 */}
+                        {filteredOrders.length > 0 && (
+                            <div className="pagination-container">
+                                <div className="pagination-info">
+                                    <span>共 {filteredOrders.length} 条订单</span>
+                                    <div className="page-size-selector">
+                                        <span>每页显示：</span>
+                                        <select 
+                                            value={pageSize} 
+                                            onChange={(e) => handlePageSizeChange(Number(e.target.value))}
+                                            className="page-size-select"
+                                        >
+                                            <option value={10}>10条</option>
+                                            <option value={20}>20条</option>
+                                            <option value={50}>50条</option>
+                                            <option value={100}>100条</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div className="pagination-controls">
+                                    <button 
+                                        className="pagination-btn"
+                                        onClick={() => handlePageChange(1)}
+                                        disabled={currentPage === 1}
+                                    >
+                                        首页
+                                    </button>
+                                    <button 
+                                        className="pagination-btn"
+                                        onClick={() => handlePageChange(currentPage - 1)}
+                                        disabled={currentPage === 1}
+                                    >
+                                        上一页
+                                    </button>
+
+                                    <div className="pagination-pages">
+                                        {Array.from({ length: totalPages }, (_, i) => i + 1)
+                                            .filter(page => {
+                                                // 只显示当前页附近的页码
+                                                return Math.abs(page - currentPage) <= 2 || page === 1 || page === totalPages;
+                                            })
+                                            .map((page, index, array) => {
+                                                // 如果页码不连续，添加省略号
+                                                const showEllipsis = index > 0 && page - array[index - 1] > 1;
+                                                return (
+                                                    <React.Fragment key={page}>
+                                                        {showEllipsis && <span className="pagination-ellipsis">...</span>}
+                                                        <button
+                                                            className={`pagination-page ${page === currentPage ? 'active' : ''}`}
+                                                            onClick={() => handlePageChange(page)}
+                                                        >
+                                                            {page}
+                                                        </button>
+                                                    </React.Fragment>
+                                                );
+                                            })}
+                                    </div>
+
+                                    <button 
+                                        className="pagination-btn"
+                                        onClick={() => handlePageChange(currentPage + 1)}
+                                        disabled={currentPage === totalPages}
+                                    >
+                                        下一页
+                                    </button>
+                                    <button 
+                                        className="pagination-btn"
+                                        onClick={() => handlePageChange(totalPages)}
+                                        disabled={currentPage === totalPages}
+                                    >
+                                        末页
+                                    </button>
+                                </div>
+
+                                <div className="pagination-jump">
+                                    <span>跳转到</span>
+                                    <input 
+                                        type="number" 
+                                        min="1" 
+                                        max={totalPages}
+                                        className="page-jump-input"
+                                        onKeyPress={(e) => {
+                                            if (e.key === 'Enter') {
+                                                const page = parseInt(e.target.value);
+                                                if (page >= 1 && page <= totalPages) {
+                                                    handlePageChange(page);
+                                                    e.target.value = '';
+                                                }
+                                            }
+                                        }}
+                                    />
+                                    <span>页</span>
+                                </div>
+                            </div>
+                        )}
+                    </>
                 )}
             </div>
             <FooterSection />

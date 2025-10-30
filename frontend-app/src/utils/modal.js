@@ -17,9 +17,9 @@ export const showModal = {
         modalService.warning(message, title);
     },
 
-    // 信息提示
-    info: (message, title = '提示') => {
-        modalService.info(message, title);
+    // 信息提示（支持回调）
+    info: (message, title = '提示', onConfirm = null) => {
+        modalService.info(message, title, onConfirm);
     },
 
     // 确认对话框

@@ -22,6 +22,7 @@ const OrderConfirmPage = () => {
     });
     
     const [loading, setLoading] = useState(false);
+    const [orderCreated, setOrderCreated] = useState(false); // 防重复创建
     const [orderItems, setOrderItems] = useState([]);
     const [totalAmount, setTotalAmount] = useState(0);
 
@@ -109,6 +110,11 @@ const OrderConfirmPage = () => {
     };
 
     const handleSubmitOrder = async () => {
+        if (orderCreated) {
+            // 已创建订单，避免重复创建
+            showModal.info('订单已生成，请在“我的订单”继续操作', '提示', () => navigate('/orders'));
+            return;
+        }
         if (!validateForm()) {
             return;
         }
@@ -155,6 +161,7 @@ const OrderConfirmPage = () => {
 
             if (result.code === 200) {
                 // 订单创建成功，现在进行模拟支付
+                setOrderCreated(true);
                 await handleMockPayment(result.data);
             } else {
                 showModal.error(result.message || '订单创建失败');
@@ -236,9 +243,12 @@ const OrderConfirmPage = () => {
                     }
                 },
                 () => {
-                    // 用户取消支付
+                    // 用户取消支付：直接跳转到我的订单，避免停留在当前页重复创建
                     console.log('用户取消支付');
-                    showModal.info('支付已取消');
+                    try {
+                        window.dispatchEvent(new CustomEvent('cartUpdated'));
+                    } catch (e) {}
+                    navigate('/orders');
                 }
             );
         } catch (error) {

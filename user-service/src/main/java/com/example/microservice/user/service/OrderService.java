@@ -53,6 +53,13 @@ public interface OrderService extends IService<Order> {
     boolean cancelOrder(Long orderId, String reason);
     
     /**
+     * 确认收货
+     * @param orderId 订单ID
+     * @return 是否成功
+     */
+    boolean confirmReceipt(Long orderId);
+    
+    /**
      * 创建订单
      * @param request 创建订单请求
      * @return 创建订单响应

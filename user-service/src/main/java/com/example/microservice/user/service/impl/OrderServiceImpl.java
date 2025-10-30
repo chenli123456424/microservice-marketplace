@@ -105,10 +105,30 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
     @Override
     @Transactional
     public boolean updateOrderStatus(Long orderId, Integer status) {
+        // 获取当前订单
+        Order existingOrder = orderMapper.selectById(orderId);
+        if (existingOrder == null) {
+            System.err.println("OrderService: 订单不存在");
+            return false;
+        }
+        
+        // 如果要更新为待收货（3），验证当前状态必须是待发货（2）
+        if (status == 3 && existingOrder.getOrderStatus() != 2) {
+            System.err.println("OrderService: 只有待发货状态的订单才能发货，当前状态: " + existingOrder.getOrderStatus());
+            return false;
+        }
+        
         Order order = new Order();
         order.setOrderId(orderId);
         order.setOrderStatus(status);
         order.setUpdateTime(LocalDateTime.now());
+        
+        // 如果更新为待收货，同时更新发货时间和发货状态
+        if (status == 3) {
+            order.setDeliveryStatus(1); // 已发货
+            order.setDeliveryTime(LocalDateTime.now());
+        }
+        
         return orderMapper.updateById(order) > 0;
     }
 
@@ -139,6 +159,9 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         
         if (deliveryStatus == 1) { // 已发货
             order.setDeliveryTime(LocalDateTime.now());
+            order.setOrderStatus(3); // 同时更新订单状态为"待收货"
+        } else if (deliveryStatus == 0) { // 取消发货
+            order.setOrderStatus(2); // 恢复为"待发货"状态
         }
         
         return orderMapper.updateById(order) > 0;
@@ -195,6 +218,42 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
             return success;
         } catch (Exception e) {
             System.err.println("OrderService: 取消订单失败: " + e.getMessage());
+            e.printStackTrace();
+            throw e;
+        }
+    }
+
+    @Override
+    @Transactional
+    public boolean confirmReceipt(Long orderId) {
+        System.out.println("OrderService: 开始确认收货，订单ID: " + orderId);
+        try {
+            // 1. 获取订单信息
+            Order existingOrder = orderMapper.selectById(orderId);
+            if (existingOrder == null) {
+                System.err.println("OrderService: 订单不存在");
+                return false;
+            }
+            
+            // 2. 验证订单状态，只有待收货（状态3）的订单才能确认收货
+            if (existingOrder.getOrderStatus() != 3) {
+                System.err.println("OrderService: 订单状态不允许确认收货，当前状态: " + existingOrder.getOrderStatus());
+                return false;
+            }
+            
+            // 3. 更新订单状态为待评价（状态4）
+            Order order = new Order();
+            order.setOrderId(orderId);
+            order.setOrderStatus(4); // 待评价
+            order.setReceiveTime(LocalDateTime.now()); // 设置收货时间
+            order.setUpdateTime(LocalDateTime.now());
+            
+            boolean success = orderMapper.updateById(order) > 0;
+            System.out.println("OrderService: 确认收货" + (success ? "成功" : "失败"));
+            
+            return success;
+        } catch (Exception e) {
+            System.err.println("OrderService: 确认收货失败: " + e.getMessage());
             e.printStackTrace();
             throw e;
         }

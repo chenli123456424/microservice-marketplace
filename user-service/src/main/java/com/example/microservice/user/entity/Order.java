@@ -49,6 +49,9 @@ public class Order {
     @TableField("delivery_time")
     private LocalDateTime deliveryTime;
     
+    @TableField("receive_time")
+    private LocalDateTime receiveTime;
+    
     @TableField("receiver_name")
     private String receiverName;
     

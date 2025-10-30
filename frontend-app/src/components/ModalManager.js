@@ -102,8 +102,18 @@ const ModalManager = () => {
     }, []);
 
     const handleClose = useCallback(() => {
+        // 关闭时优先触发取消；若没有取消，则触发确认回调（用于 info 模态在关闭时也执行后续动作）
+        try {
+            if (modalState && typeof modalState.onCancel === 'function') {
+                modalState.onCancel();
+            } else if (modalState && typeof modalState.onConfirm === 'function') {
+                modalState.onConfirm();
+            }
+        } catch (e) {
+            // no-op
+        }
         modalService.hide();
-    }, []);
+    }, [modalState]);
 
     return (
         <CustomModal

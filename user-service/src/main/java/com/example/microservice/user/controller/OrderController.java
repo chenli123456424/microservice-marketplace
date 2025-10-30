@@ -209,6 +209,48 @@ public class OrderController {
         }
     }
 
+    @PutMapping("/{orderId}/confirm-receipt")
+    @Operation(summary = "确认收货")
+    public ResponseResult<String> confirmReceipt(
+            @Parameter(description = "订单ID") @PathVariable Long orderId,
+            @RequestHeader(value = "Authorization", required = false) String token) {
+        try {
+            System.out.println("确认收货请求，订单ID: " + orderId);
+            
+            // 验证token
+            if (token == null || token.isEmpty()) {
+                return ResponseResult.error("请先登录");
+            }
+            
+            // 验证是否是订单所有者
+            Long userId = extractUserIdFromToken(token);
+            Order order = orderService.getOrderWithItems(orderId);
+            if (order == null) {
+                return ResponseResult.error("订单不存在");
+            }
+            
+            if (userId == null || !order.getUserId().equals(userId)) {
+                return ResponseResult.error("无权操作此订单");
+            }
+            
+            // 验证订单状态，只有待收货（状态3）的订单才能确认收货
+            if (order.getOrderStatus() != 3) {
+                return ResponseResult.error("该订单当前状态不允许确认收货");
+            }
+            
+            boolean success = orderService.confirmReceipt(orderId);
+            if (success) {
+                return ResponseResult.success("确认收货成功");
+            } else {
+                return ResponseResult.error("确认收货失败");
+            }
+        } catch (Exception e) {
+            System.err.println("确认收货失败: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseResult.error("确认收货失败: " + e.getMessage());
+        }
+    }
+
     @PostMapping("/create")
     @Operation(summary = "创建订单")
     public ResponseResult<CreateOrderResponse> createOrder(@RequestBody CreateOrderRequest request) {

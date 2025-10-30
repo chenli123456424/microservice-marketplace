@@ -45,7 +45,7 @@ const ProductFilter = () => {
     
     // 分页相关状态
     const [currentPage, setCurrentPage] = useState(1);
-    const [pageSize, setPageSize] = useState(10);
+    const [pageSize, setPageSize] = useState(12);
     const [totalPages, setTotalPages] = useState(1);
     const [totalProducts, setTotalProducts] = useState(0);
 
@@ -1259,11 +1259,11 @@ const ProductFilter = () => {
                                 onChange={(e) => handlePageSizeChange(parseInt(e.target.value))}
                                 className="fl-page-size-select"
                             >
-                                <option value={10}>10</option>
-                                <option value={20}>20</option>
-                                <option value={50}>50</option>
-                                <option value={100}>100</option>
-                                <option value={200}>200</option>
+                                <option value={12}>12</option>
+                                <option value={24}>24</option>
+                                <option value={36}>36</option>
+                                <option value={48}>48</option>
+                                <option value={60}>60</option>
                             </select>
                             <span>件</span>
                         </div>
