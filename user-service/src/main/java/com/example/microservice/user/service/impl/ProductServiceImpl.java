@@ -416,7 +416,14 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
                    .eq("status", 1)  // 状态为启用
                    .orderByDesc("create_time")
                    .last("LIMIT " + limit);
-        return productMapper.selectList(queryWrapper);
+        List<Product> products = productMapper.selectList(queryWrapper);
+        
+        // 为每个商品设置图片信息
+        for (Product product : products) {
+            setProductImages(product);
+        }
+        
+        return products;
     }
     
     @Override
@@ -426,7 +433,14 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
                    .eq("status", 1)  // 状态为启用
                    .orderByDesc("create_time")
                    .last("LIMIT " + limit);
-        return productMapper.selectList(queryWrapper);
+        List<Product> products = productMapper.selectList(queryWrapper);
+        
+        // 为每个商品设置图片信息
+        for (Product product : products) {
+            setProductImages(product);
+        }
+        
+        return products;
     }
     
     @Override
@@ -436,7 +450,14 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
                    .eq("status", 1)  // 状态为启用
                    .orderByDesc("create_time")
                    .last("LIMIT " + limit);
-        return productMapper.selectList(queryWrapper);
+        List<Product> products = productMapper.selectList(queryWrapper);
+        
+        // 为每个商品设置图片信息
+        for (Product product : products) {
+            setProductImages(product);
+        }
+        
+        return products;
     }
     
     @Override
@@ -446,7 +467,14 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
                    .eq("status", 1)  // 状态为启用
                    .orderByDesc("create_time")
                    .last("LIMIT " + limit);
-        return productMapper.selectList(queryWrapper);
+        List<Product> products = productMapper.selectList(queryWrapper);
+        
+        // 为每个商品设置图片信息
+        for (Product product : products) {
+            setProductImages(product);
+        }
+        
+        return products;
     }
     
     @Override
