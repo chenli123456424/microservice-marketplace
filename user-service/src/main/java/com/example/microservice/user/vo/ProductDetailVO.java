@@ -27,4 +27,5 @@ public class ProductDetailVO {
     private ProductCommonAttr commonAttr;
     private List<ProductExtendAttr> extendAttrs;
     private List<ProductImage> images;
+    private String detailDescription;
 }

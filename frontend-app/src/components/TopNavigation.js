@@ -1,18 +1,156 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import axios from 'axios';
 
 function TopNavigation() {
     const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
     const [isCartMenuOpen, setIsCartMenuOpen] = useState(false);
+    const [isSearchDropdownOpen, setIsSearchDropdownOpen] = useState(false);
+    const [searchValue, setSearchValue] = useState('');
+    const [categories, setCategories] = useState([]);
+    const [hotSearchKeywords, setHotSearchKeywords] = useState([]);
+    const [cartItems, setCartItems] = useState([]);
+    const [cartLoading, setCartLoading] = useState(false);
     
-    const { isAuthenticated, logout } = useAuth();
+    const { isAuthenticated, logout, token } = useAuth();
     const navigate = useNavigate();
 
     const handleLogout = () => {
         logout();
         setIsUserMenuOpen(false);
         navigate('/');
+    };
+
+    // 获取分类数据
+    useEffect(() => {
+        const fetchCategories = async () => {
+            try {
+                const response = await fetch('http://localhost:8081/api/categories');
+                const data = await response.json();
+                if (data.code === 200 && data.data) {
+                    setCategories(data.data);
+                }
+            } catch (error) {
+                console.error('获取分类数据失败:', error);
+            }
+        };
+        fetchCategories();
+    }, []);
+
+    // 获取热门搜索关键词的函数
+    const fetchHotSearchKeywords = async () => {
+        try {
+            const response = await axios.get('http://localhost:8081/api/hot-search-keywords');
+            if (response.data.code === 200 && response.data.data) {
+                setHotSearchKeywords(response.data.data);
+            }
+        } catch (error) {
+            console.error('获取热门搜索关键词失败:', error);
+        }
+    };
+
+    // 获取热门搜索关键词
+    useEffect(() => {
+        fetchHotSearchKeywords();
+    }, []);
+
+    // 获取购物车数据
+    const fetchCartItems = async () => {
+        console.log('TopNavigation: 开始获取购物车数据，认证状态:', isAuthenticated, 'Token:', !!token);
+        if (!isAuthenticated || !token) {
+            console.log('TopNavigation: 用户未认证或token无效，清空购物车数据');
+            setCartItems([]);
+            return;
+        }
+
+        try {
+            setCartLoading(true);
+            console.log('TopNavigation: 调用购物车API');
+            const response = await axios.get('http://localhost:8081/api/cart/items', {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            
+            console.log('TopNavigation: 购物车API响应:', response.data);
+            if (response.data.code === 200) {
+                setCartItems(response.data.data || []);
+                console.log('TopNavigation: 购物车数据更新成功，商品数量:', (response.data.data || []).length);
+            }
+        } catch (error) {
+            console.error('TopNavigation: 获取购物车数据失败:', error);
+            setCartItems([]);
+        } finally {
+            setCartLoading(false);
+        }
+    };
+
+    // 当用户登录状态或token变化时，重新获取购物车数据
+    useEffect(() => {
+        fetchCartItems();
+    }, [isAuthenticated, token]);
+
+    // 监听购物车数据变化事件
+    useEffect(() => {
+        const handleCartUpdate = () => {
+            console.log('TopNavigation: 收到cartUpdated事件，开始刷新购物车数据');
+            fetchCartItems();
+        };
+
+        // 监听自定义事件
+        window.addEventListener('cartUpdated', handleCartUpdate);
+        console.log('TopNavigation: 已注册cartUpdated事件监听器');
+        
+        // 清理事件监听器
+        return () => {
+            window.removeEventListener('cartUpdated', handleCartUpdate);
+            console.log('TopNavigation: 已移除cartUpdated事件监听器');
+        };
+    }, []);
+
+    // 处理搜索框点击
+    const handleSearchClick = () => {
+        setIsSearchDropdownOpen(true);
+    };
+
+    // 处理搜索框失焦
+    const handleSearchBlur = () => {
+        // 延迟关闭，让用户有时间点击下拉选项
+        setTimeout(() => {
+            setIsSearchDropdownOpen(false);
+        }, 200);
+    };
+
+    // 处理搜索关键词点击
+    const handleSearchKeywordClick = (categoryName, categoryId) => {
+        setSearchValue(categoryName);
+        setIsSearchDropdownOpen(false);
+        // 跳转到对应的筛选分类页
+        navigate(`/products?category=${encodeURIComponent(categoryName)}&mainId=${categoryId}`);
+    };
+
+    // 处理搜索提交
+    const handleSearchSubmit = async (e) => {
+        e.preventDefault();
+        if (searchValue.trim()) {
+            // 记录搜索关键词到Redis
+            try {
+                await axios.post('http://localhost:8081/api/search/record', null, {
+                    params: { keyword: searchValue.trim() }
+                });
+                // 重新获取热门搜索关键词列表
+                await fetchHotSearchKeywords();
+            } catch (error) {
+                console.error('记录搜索关键词失败:', error);
+            }
+            
+            // 跳转到搜索结果页
+            navigate(`/products?search=${encodeURIComponent(searchValue.trim())}`);
+        } else {
+            // 如果搜索框为空，跳转到全部商品页面
+            navigate('/products');
+        }
     };
 
     return (
@@ -98,7 +236,6 @@ function TopNavigation() {
                     padding: 8px 15px; /* 内边距 */
                     width: 250px; /* 宽度 */
                     border: 1px solid #ddd; /* 边框 */
-                    border-radius: 20px; /* 圆角 */
                     font-size: 14px; /* 字体大小 */
                     outline: none; /* 去除焦点轮廓 */
                     transition: border-color 0.3s ease; /* 边框颜色过渡效果 */
@@ -115,6 +252,46 @@ function TopNavigation() {
                     cursor: pointer; /* 鼠标指针样式 */
                     font-size: 16px; /* 字体大小 */
                     color: #999; /* 文字颜色 */
+                }
+
+                /* 搜索下拉框样式 */
+                .search-dropdown {
+                    position: absolute; /* 绝对定位 */
+                    top: 100%; /* 距离顶部距离 */
+                    left: 0; /* 距离左侧距离 */
+                    right: 0; /* 距离右侧距离 */
+                    background-color: #fff; /* 背景颜色 */
+                    border: 1px solid #ddd; /* 边框 */
+                    border-top: none; /* 无顶部边框 */
+                    box-shadow: 0 4px 6px rgba(0,0,0,0.1); /* 阴影效果 */
+                    z-index: 1001; /* 层级 */
+                    max-height: 300px; /* 最大高度 */
+                    overflow-y: auto; /* 垂直滚动条 */
+                }
+
+                /* 搜索建议项样式 */
+                .search-suggestion {
+                    padding: 12px 15px; /* 内边距 */
+                    cursor: pointer; /* 鼠标指针样式 */
+                    border-bottom: 1px solid #f0f0f0; /* 底部边框 */
+                    transition: background-color 0.2s ease; /* 背景色过渡效果 */
+                    font-size: 14px; /* 字体大小 */
+                    color: #333; /* 文字颜色 */
+                }
+
+                /* 搜索建议项悬停效果 */
+                .search-suggestion:hover {
+                    background-color: #f8f9fa; /* 悬停时背景色 */
+                }
+
+                /* 最后一个搜索建议项 */
+                .search-suggestion:last-child {
+                    border-bottom: none; /* 无底部边框 */
+                }
+
+                /* 搜索建议项高亮 */
+                .search-suggestion.highlighted {
+                    background-color: #e3f2fd; /* 高亮背景色 */
                 }
                 
                 /* 用户菜单容器 */
@@ -275,6 +452,15 @@ function TopNavigation() {
                     color: #007bff; /* 文字颜色 */
                     margin-right: 15px; /* 右外边距 */
                     cursor: pointer; /* 鼠标指针样式 */
+                    display: inline-block; /* 行内块元素 */
+                    margin-bottom: 5px; /* 下外边距，支持换行 */
+                    transition: color 0.2s ease; /* 颜色过渡效果 */
+                }
+                
+                /* 热门搜索词悬停效果 */
+                .hot-search-term:hover {
+                    color: #0056b3; /* 悬停时颜色 */
+                    text-decoration: underline; /* 下划线 */
                 }
                 `}
             </style>
@@ -321,14 +507,35 @@ function TopNavigation() {
                 <div className="right-section">
                     {/* 搜索框 */}
                     <div className="search-container">
-                        <input
-                            type="text"
-                            placeholder="搜索商品、品牌、型号..."
-                            className="search-input"
-                        />
-                        <button className="search-button">
-                            🔍
-                        </button>
+                        <form onSubmit={handleSearchSubmit}>
+                            <input
+                                type="text"
+                                placeholder="搜索商品、品牌、型号..."
+                                className="search-input"
+                                value={searchValue}
+                                onChange={(e) => setSearchValue(e.target.value)}
+                                onClick={handleSearchClick}
+                                onBlur={handleSearchBlur}
+                            />
+                            <button type="submit" className="search-button">
+                                🔍
+                            </button>
+                        </form>
+                        
+                        {/* 搜索建议下拉框 */}
+                        {isSearchDropdownOpen && (
+                            <div className="search-dropdown">
+                                {categories.map((category) => (
+                                    <div
+                                        key={category.mainId}
+                                        className="search-suggestion"
+                                        onClick={() => handleSearchKeywordClick(category.name, category.mainId)}
+                                    >
+                                        {category.name}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
 
                     {/* 个人中心或登录/注册 */}
@@ -373,29 +580,79 @@ function TopNavigation() {
                         onMouseEnter={() => setIsCartMenuOpen(true)}
                         onMouseLeave={() => setIsCartMenuOpen(false)}
                     >
-                        <button className="menu-button">
+                        <button 
+                            className="menu-button"
+                            onClick={() => navigate('/cart')}
+                        >
                             🛒
-                            <span className="notification-badge">
-                                3
-                            </span>
+                            {cartItems.length > 0 && (
+                                <span className="notification-badge">
+                                    {cartItems.length}
+                                </span>
+                            )}
                         </button>
                         
                         {isCartMenuOpen && (
                             <div className="cart-dropdown">
                                 <div className="cart-header">
-                                    购物车 (3)
+                                    购物车 ({cartItems.length})
                                 </div>
                                 <div className="cart-items">
-                                    {/* 购物车商品示例 */}
-                                    <div className="cart-item">
-                                        <div className="cart-item-image"></div>
-                                        <div>
-                                            <div>商品名称</div>
-                                            <div className="cart-item-details">
-                                                数量: 1
-                                            </div>
+                                    {cartLoading ? (
+                                        <div style={{ padding: '10px', textAlign: 'center', color: '#666' }}>
+                                            加载中...
                                         </div>
-                                    </div>
+                                    ) : cartItems.length > 0 ? (
+                                        cartItems.slice(0, 3).map((item) => (
+                                            <div key={item.id} className="cart-item">
+                                                <div className="cart-item-image">
+                                                    {item.thumbnailUrl && (
+                                                        <img 
+                                                            src={`http://localhost:8081${item.thumbnailUrl}`}
+                                                            alt={item.productName}
+                                                            style={{
+                                                                width: '40px',
+                                                                height: '40px',
+                                                                objectFit: 'cover',
+                                                                borderRadius: '4px'
+                                                            }}
+                                                        />
+                                                    )}
+                                                </div>
+                                                <div>
+                                                    <div style={{ 
+                                                        fontSize: '12px', 
+                                                        fontWeight: 'bold',
+                                                        marginBottom: '2px',
+                                                        overflow: 'hidden',
+                                                        textOverflow: 'ellipsis',
+                                                        whiteSpace: 'nowrap',
+                                                        maxWidth: '120px'
+                                                    }}>
+                                                        {item.productName}
+                                                    </div>
+                                                    <div className="cart-item-details" style={{ fontSize: '11px', color: '#666' }}>
+                                                        数量: {item.quantity} | ¥{item.price}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <div style={{ padding: '10px', textAlign: 'center', color: '#666' }}>
+                                            购物车是空的
+                                        </div>
+                                    )}
+                                    {cartItems.length > 3 && (
+                                        <div style={{ 
+                                            padding: '5px 10px', 
+                                            textAlign: 'center', 
+                                            color: '#666', 
+                                            fontSize: '12px',
+                                            borderTop: '1px solid #eee'
+                                        }}>
+                                            还有 {cartItems.length - 3} 件商品...
+                                        </div>
+                                    )}
                                 </div>
                                 <Link to="/cart" className="cart-button">
                                     查看购物车
@@ -417,23 +674,37 @@ function TopNavigation() {
             </div>
 
             {/* 热门搜索词 */}
-            <div className="hot-search-container">
-                <span className="hot-search-label">
-                    热门搜索:
-                </span>
-                <span className="hot-search-term">
-                    沙发
-                </span>
-                <span className="hot-search-term">
-                    床
-                </span>
-                <span className="hot-search-term">
-                    瓷砖
-                </span>
-                <span className="hot-search-term">
-                    灯具
-                </span>
-            </div>
+            {hotSearchKeywords.length > 0 && (
+                <div className="hot-search-container">
+                    <span className="hot-search-label">
+                        热门搜索:
+                    </span>
+                    {hotSearchKeywords.map((keyword, index) => (
+                        <span 
+                            key={index}
+                            className="hot-search-term"
+                            onClick={async () => {
+                                // 记录搜索关键词到Redis
+                                try {
+                                    await axios.post('http://localhost:8081/api/search/record', null, {
+                                        params: { keyword: keyword }
+                                    });
+                                    // 重新获取热门搜索关键词列表
+                                    await fetchHotSearchKeywords();
+                                } catch (error) {
+                                    console.error('记录搜索关键词失败:', error);
+                                }
+                                
+                                // 跳转到搜索结果页
+                                navigate(`/products?search=${encodeURIComponent(keyword)}`);
+                            }}
+                            style={{ cursor: 'pointer' }}
+                        >
+                            {keyword}
+                        </span>
+                    ))}
+                </div>
+            )}
         </header>
     );
 }

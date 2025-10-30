@@ -9,7 +9,7 @@ const FooterSection = () => {
                     /* Footer容器样式 */
                     .footer-container {
                         background-color: #fff; /* 白色背景 */
-                        padding: 10px 20px; /* 内边距 */
+                        padding: 20px 20px; /* 内边距 */
                     }
                     
                     /* Footer内容容器 */

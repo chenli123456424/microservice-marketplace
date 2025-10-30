@@ -14,6 +14,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import com.example.microservice.user.config.JwtRequestFilter;
 import java.util.Arrays;
 
 @Configuration
@@ -62,15 +63,32 @@ public class SecurityConfig {
                                 "/api/user/list",
                                 "/api/user/{id}",
                                 "/api/categories",
+                                "/api/categories/**",
                                 "/api/products",
-                                "/api/products/*", // 确保包含单级路径
-                                "/api/products/**", // 包含通配符路径
+                                "/api/products/**",
+                                "/api/products/*",
+                                "/api/products/1",
+                                "/api/products/2",
+                                "/api/products/3",
+                                "/api/products/4",
+                                "/api/products/5",
                                 "/api/filters",
+                                "/api/filters/**",
                                 "/api/brands",
+                                "/api/brands/**",
+                                "/api/recommended-products",
+                                "/api/recommended-products-with-images",
+                                "/api/hot-search-keywords",
+                                "/api/search/record",
+                                "/api/search/stats/**",
                                 "/api/admin/products",
-                                "/api/admin/products/search", // 添加搜索接口权限
-                                "/api/admin/products/*", // 确保管理端路径也包含单级路径
-                                "/api/admin/products/**"
+                                "/api/admin/products/search",
+                                "/api/admin/products/**",
+                                "/api/admin/upload",
+                                "/api/cart/**",
+                                "/api/orders/**",
+                                "/api/admin/category/**",
+                                "/uploads/**"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )

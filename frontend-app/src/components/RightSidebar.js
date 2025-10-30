@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { showModal } from '../utils/modal';
 
 const RightSidebar = () => {
   const [showBackToTop, setShowBackToTop] = useState(false);
+  const navigate = useNavigate();
 
   // 监听滚动事件
   useEffect(() => {
@@ -124,7 +127,15 @@ const RightSidebar = () => {
       {/* 个人中心 */}
       <button
         className="sidebar-button"
-        onClick={() => alert('跳转到个人中心')}
+        onClick={() => {
+          // 检查用户是否已登录
+          const token = localStorage.getItem('token');
+          if (token) {
+            showModal.info('个人中心功能待实现');
+          } else {
+            navigate('/auth');
+          }
+        }}
       >
         <div className="button-icon">
           👤
@@ -163,7 +174,7 @@ const RightSidebar = () => {
       {/* 购物车 */}
       <button
         className="sidebar-button"
-        onClick={() => alert('查看购物车')}
+        onClick={() => navigate('/cart')}
       >
         <div className="button-icon">
           🛒

@@ -13,7 +13,7 @@ public class ProductCommonAttr {
     private Long productId;
     private String material;
     private String spec;
-    private String priceUnit;
+    private String priceInfo;
     private String envGrade;
     private String style;
     private String warranty;

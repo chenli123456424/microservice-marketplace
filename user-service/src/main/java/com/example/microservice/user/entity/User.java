@@ -21,7 +21,7 @@ public class User implements Serializable {
      * type = IdType.AUTO: 指定主键策略为数据库自增。
      */
     @TableId(value = "id", type = IdType.AUTO)
-    private long id;
+    private Long id;
     private String username;
     private String password;
     private String email;

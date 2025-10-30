@@ -1,13 +1,18 @@
 import React, {useEffect, useRef, useState} from 'react';
 import {useNavigate} from 'react-router-dom';
 
-const MainContentSection = ({categories}) => {
+const MainContentSection = () => {
     const [isHovered, setIsHovered] = useState(false);
     const [currentSlide, setCurrentSlide] = useState(0);
     const [hoveredSubcategory, setHoveredSubcategory] = useState(null);
     const [isPaused, setIsPaused] = useState(false);
-    const [activeItem, setActiveItem] = useState(null);
-    const [activeCategory, setActiveCategory] = useState(categories.length > 0 ? categories[0].name : '');
+    const [activeCategory, setActiveCategory] = useState('');
+    const [categories, setCategories] = useState([]);
+    const [isMouseInValidArea, setIsMouseInValidArea] = useState(false);
+    
+    // 引用DOM元素
+    const leftNavigationRef = useRef(null);
+    const productWindowRef = useRef(null);
 
     const intervalRef = useRef(null);
     const navigate = useNavigate();
@@ -20,6 +25,72 @@ const MainContentSection = ({categories}) => {
         '/images/门窗五金.png', // 示例
         '/images/灯具照明.png'  // 示例
     ];
+
+    // 获取后端分类数据
+    useEffect(() => {
+        const fetchCategories = async () => {
+            try {
+                console.log('开始请求分类数据...');
+                const response = await fetch('http://localhost:8081/api/categories');
+                console.log('收到响应:', response);
+
+                // 检查响应状态
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                // 检查内容类型
+                const contentType = response.headers.get('content-type');
+                console.log('Content-Type:', contentType);
+                if (!contentType || !contentType.includes('application/json')) {
+                    const text = await response.text();
+                    console.log('响应内容（非JSON）:', text);
+                    throw new Error('Response is not JSON');
+                }
+
+                const result = await response.json();
+                console.log('解析后的JSON数据:', result);
+
+                if (result.code === 200 && result.data && Array.isArray(result.data)) {
+                    // 转换后端数据结构为前端所需格式
+                    const transformedCategories = result.data.map(mainCategory => {
+                        // 打印原始数据结构以调试
+                        console.log('主分类原始数据:', mainCategory);
+                        
+                        return {
+                            id: mainCategory.mainId,
+                            name: mainCategory.name,
+                            subcategories: mainCategory.subCategories ? mainCategory.subCategories.map(subCategory => {
+                                // 打印子分类原始数据以调试
+                                console.log('子分类原始数据:', subCategory);
+                            
+                                return {
+                                    id: subCategory.subId,
+                                    name: subCategory.name,
+                                    imageUrl: subCategory.imageUrl, // 添加图片URL
+                                    items: []  // 保持空数组，因为不需要具体商品
+                                };
+                            }) : []
+                        };
+                    });
+
+                    console.log('转换后的分类数据:', transformedCategories);
+                    setCategories(transformedCategories);
+
+                    // 设置默认激活的分类
+                    if (transformedCategories.length > 0) {
+                        setActiveCategory(transformedCategories[0].name);
+                    }
+                } else {
+                    console.error('API返回错误:', result.message);
+                }
+            } catch (error) {
+                console.error('获取分类数据失败:', error);
+            }
+        };
+
+        fetchCategories();
+    }, []);
 
     // 自动轮播：每5秒切换一张
     useEffect(() => {
@@ -36,36 +107,54 @@ const MainContentSection = ({categories}) => {
         };
     }, [isPaused, slides.length]);
 
-    useEffect(() => {
-        if (hoveredSubcategory && hoveredSubcategory.items.length > 0) {
-            setActiveItem(hoveredSubcategory.items[0].name); // 默认选中第一个二级分类
-        }
-    }, [hoveredSubcategory]);
-
-    // 获取当前激活的子分类
-    const getCurrentSubcategory = () => {
-        if (!hoveredSubcategory || !activeItem) return null;
-        return hoveredSubcategory.items.find(item => item.name === activeItem);
-    };
-
-    const currentSubcategory = getCurrentSubcategory();
-
-    // 处理商品点击跳转到筛选页面 - 修改此函数以正确传递筛选参数
+    // 修改 handleProductClick 函数
     const handleProductClick = (categoryName, subCategoryName) => {
         // 跳转到商品筛选页面，并传递分类参数
         navigate(`/products?category=${encodeURIComponent(categoryName)}&subcategory=${encodeURIComponent(subCategoryName)}`);
     };
-
-    // 当分类改变时更新hoveredSubcategory
-    useEffect(() => {
-        if (categories.length > 0 && activeCategory) {
-            const category = categories.find(cat => cat.name === activeCategory);
-            if (category && category.subcategories && category.subcategories.length > 0) {
-                // 不再默认设置hoveredSubcategory，只在用户悬停时设置
-                // setHoveredSubcategory(category.subcategories[0]);
-            }
+    
+    // 检查鼠标是否在有效区域内
+    const checkMousePosition = (e) => {
+        // 获取左侧导航和商品窗口的DOM元素
+        const leftNavigation = leftNavigationRef.current;
+        const productWindow = productWindowRef.current;
+        
+        if (!leftNavigation && !productWindow) {
+            setIsMouseInValidArea(false);
+            return;
         }
-    }, [activeCategory, categories]);
+        
+        // 检查鼠标是否在左侧导航或商品窗口内
+        const isInLeftNav = leftNavigation && 
+            e.clientX >= leftNavigation.getBoundingClientRect().left &&
+            e.clientX <= leftNavigation.getBoundingClientRect().right &&
+            e.clientY >= leftNavigation.getBoundingClientRect().top &&
+            e.clientY <= leftNavigation.getBoundingClientRect().bottom;
+            
+        const isInProductWindow = productWindow && 
+            e.clientX >= productWindow.getBoundingClientRect().left &&
+            e.clientX <= productWindow.getBoundingClientRect().right &&
+            e.clientY >= productWindow.getBoundingClientRect().top &&
+            e.clientY <= productWindow.getBoundingClientRect().bottom;
+            
+        // 更新鼠标位置状态
+        setIsMouseInValidArea(isInLeftNav || isInProductWindow);
+        
+        // 如果鼠标不在有效区域内，隐藏商品窗口
+        if (!(isInLeftNav || isInProductWindow)) {
+            setHoveredSubcategory(null);
+            setIsHovered(false);
+        }
+    };
+    
+    // 添加全局鼠标移动事件监听
+    useEffect(() => {
+        document.addEventListener('mousemove', checkMousePosition);
+        
+        return () => {
+            document.removeEventListener('mousemove', checkMousePosition);
+        };
+    }, []);
 
     return (
         <div className="main-content-container"
@@ -131,7 +220,7 @@ const MainContentSection = ({categories}) => {
                     
                     /* 左侧导航按钮 */
                     .carousel-nav-button.prev {
-                        left: 280px;
+                        left: 290px;
                     }
                     
                     /* 右侧导航按钮 */
@@ -316,7 +405,7 @@ const MainContentSection = ({categories}) => {
                     /* 商品图片容器 */
                     .cbl-product-image {
                         width: 100%;
-                        height: 100px;
+                        height: 250px;
                         background-size: cover;
                         background-position: center;
                         background-repeat: no-repeat;
@@ -326,7 +415,7 @@ const MainContentSection = ({categories}) => {
                     
                     /* 商品名称 */
                     .cbl-product-name {
-                        font-size: 14px;
+                        font-size: 15px;
                         color: #333;
                         display: block;
                         font-weight: 500;
@@ -374,13 +463,18 @@ const MainContentSection = ({categories}) => {
 
             {/* 左侧导航区域 */}
             <div
+                ref={leftNavigationRef}
                 className={`left-navigation ${isHovered ? 'left-navigation-bg hovered' : 'left-navigation-bg'}`}
-                onMouseEnter={() => setIsHovered(true)}
+                onMouseEnter={() => {
+                    setIsHovered(true);
+                    setIsMouseInValidArea(true);
+                }}
                 onMouseLeave={() => {
-                    // 延迟隐藏商品窗口，给用户时间移动到窗口上
+                    // 不立即隐藏，让鼠标跟踪逻辑处理
                     setTimeout(() => {
-                        if (!hoveredSubcategory) {
+                        if (!isMouseInValidArea) {
                             setIsHovered(false);
+                            setHoveredSubcategory(null);
                         }
                     }, 100);
                 }}
@@ -401,61 +495,78 @@ const MainContentSection = ({categories}) => {
                                     if (activeCategory !== category.name) {
                                         setActiveCategory(category.name);
                                     }
-                                    // 当鼠标悬停在分类上时显示商品窗口
+                                    // 当鼠标悬停在分类上时显示所有子分类
                                     if (category.subcategories && category.subcategories.length > 0) {
-                                        setHoveredSubcategory(category.subcategories[0]);
+                                        setHoveredSubcategory(category.subcategories);
+                                        setIsMouseInValidArea(true);
                                     }
                                 }}
                             >
                                 {category.name}
                                 <span className="category-arrow">></span>
                             </button>
-
                         </div>
                     ))}
                 </div>
             </div>
 
             {/* 商品展示窗口（悬停时显示） */}
-            {hoveredSubcategory && (
+            {hoveredSubcategory && isMouseInValidArea && (
                 <div
+                    ref={productWindowRef}
                     className="cbl-product-window"
                     onMouseEnter={() => {
                         // 鼠标进入窗口时保持窗口显示
                         setHoveredSubcategory(hoveredSubcategory);
+                        setIsMouseInValidArea(true);
                     }}
                     onMouseLeave={() => {
-                        // 鼠标离开窗口时隐藏窗口
-                        setHoveredSubcategory(null);
-                        setIsHovered(false);
+                        // 不立即隐藏，让鼠标跟踪逻辑处理
+                        setTimeout(() => {
+                            if (!isMouseInValidArea) {
+                                setHoveredSubcategory(null);
+                                setIsHovered(false);
+                            }
+                        }, 100);
                     }}
                 >
                     {/* 一级标题 */}
                     <h4 className="cbl-product-window-title">
-                        {hoveredSubcategory.name}
+                        {activeCategory}
                     </h4>
 
-                    {/* 三级商品 - 图片 + 名称，一行两个 */}
+                    {/* 显示所有子分类 */}
                     <div className="cbl-product-grid">
-                        {hoveredSubcategory.items.map((item) => {
-                            // 构造图片 URL（示例：https://via.placeholder.com/100x100?text=沙发）
-                            const imageUrl = `https://via.placeholder.com/100x100?text=${encodeURIComponent(item.name)}`;
+                        {hoveredSubcategory.map((subItem) => {
+                            // 使用数据库中的图片URL，如果没有则使用占位图
+                            const imageUrl = subItem.imageUrl 
+                                ? `http://localhost:8081${subItem.imageUrl}`
+                                : `data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%22100%22%20height%3D%22100%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20preserveAspectRatio%3D%22none%22%3E%3Cdefs%3E%3Cstyle%20type%3D%22text%2Fcss%22%3E%23holder_1687e593c1e%20text%20%7B%20fill%3A%23999%3Bfont-weight%3Anormal%3Bfont-family%3AArial%2C%20Helvetica%2C%20Open%20Sans%2C%20sans-serif%2C%20monospace%3Bfont-size%3A14pt%20%7D%20%3C%2Fstyle%3E%3C%2Fdefs%3E%3Cg%20id%3D%22holder_1687e593c1e%22%3E%3Crect%20width%3D%22100%22%20height%3D%22100%22%20fill%3D%22%23f5f5f5%22%3E%3C%2Frect%3E%3Cg%3E%3Ctext%20x%3D%2220%22%20y%3D%2250%22%3E${encodeURIComponent(subItem.name)}%3C%2Ftext%3E%3C%2Fg%3E%3C%2Fg%3E%3C%2Fsvg%3E`;
+                            
                             return (
                                 <div
-                                    key={item.id}
+                                    key={subItem.id}
                                     className="cbl-product-item"
-                                    onClick={() => handleProductClick(activeCategory, item.name)}
+                                    onClick={() => handleProductClick(activeCategory, subItem.name)}
                                 >
                                     {/* 图片 */}
                                     <div
                                         className="cbl-product-image"
                                         style={{
-                                            backgroundImage: `url(${imageUrl})`
+                                            backgroundImage: `url(${imageUrl})`,
+                                            backgroundSize: 'cover',
+                                            backgroundPosition: 'center',
+                                            backgroundRepeat: 'no-repeat'
+                                        }}
+                                        onError={(e) => {
+                                            // 如果图片加载失败，使用占位图
+                                            const placeholderUrl = `data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%22100%22%20height%3D%22100%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20preserveAspectRatio%3D%22none%22%3E%3Cdefs%3E%3Cstyle%20type%3D%22text%2Fcss%22%3E%23holder_1687e593c1e%20text%20%7B%20fill%3A%23999%3Bfont-weight%3Anormal%3Bfont-family%3AArial%2C%20Helvetica%2C%20Open%20Sans%2C%20sans-serif%2C%20monospace%3Bfont-size%3A14pt%20%7D%20%3C%2Fstyle%3E%3C%2Fdefs%3E%3Cg%20id%3D%22holder_1687e593c1e%22%3E%3Crect%20width%3D%22100%22%20height%3D%22100%22%20fill%3D%22%23f5f5f5%22%3E%3C%2Frect%3E%3Cg%3E%3Ctext%20x%3D%2220%22%20y%3D%2250%22%3E${encodeURIComponent(subItem.name)}%3C%2Ftext%3E%3C%2Fg%3E%3C%2Fg%3E%3C%2Fsvg%3E`;
+                                            e.target.style.backgroundImage = `url(${placeholderUrl})`;
                                         }}
                                     />
                                     {/* 标题 */}
                                     <span className="cbl-product-name">
-                                        {item.name}
+                                        {subItem.name}
                                     </span>
                                 </div>
                             );

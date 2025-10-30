@@ -197,8 +197,8 @@ function AuthPage() {
                     email: loginData.email,
                     code: loginData.verificationCode
                 });
-                const { token } = response.data;
-                login(token);
+                const { token, user } = response.data;
+                login(token, user);
                 navigate('/');
             } else {
                 // 普通用户名密码登录
@@ -206,8 +206,8 @@ function AuthPage() {
                     username: loginData.username,
                     password: loginData.password
                 });
-                const { token } = response.data;
-                login(token);
+                const { token, user } = response.data;
+                login(token, user);
                 navigate('/');
             }
         } catch (error) {

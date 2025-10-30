@@ -4,23 +4,41 @@ import React, { createContext, useState, useContext } from 'react';
 const AuthContext = createContext(null);
 //创建Provider组件
 export function AuthProvider({ children }) {
-    //创建状态，并从localStorage中初始化token
+    //创建状态，并从localStorage中初始化token和user
     const [token, setToken] = useState(localStorage.getItem('token'));
+    const [user, setUser] = useState(() => {
+        try {
+            const userData = localStorage.getItem('user');
+            return userData && userData !== 'undefined' && userData !== 'null' 
+                ? JSON.parse(userData) 
+                : null;
+        } catch (error) {
+            console.error('解析用户数据失败:', error);
+            return null;
+        }
+    });
 
     //登录函数：更新state并存入localStorage
-    const login = (newtoken) => {
-        setToken(newtoken);
-        localStorage.setItem('token', newtoken);
+    const login = (newToken, userData) => {
+        setToken(newToken);
+        setUser(userData);
+        localStorage.setItem('token', newToken);
+        localStorage.setItem('user', JSON.stringify(userData));
     };
-    //登出函数：更新state并删除localStorage中的token
+    //登出函数：更新state并删除localStorage中的token和user
     const logout = () => {
         setToken(null);
+        setUser(null);
         localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        // 清理可能存在的无效数据
+        localStorage.removeItem('undefined');
     };
 
     //定义要通过Context传递的数据
     const value = {
         token,
+        user,
         isAuthenticated: !!token,//!!token将token字符串转为布尔值
         login,
         logout

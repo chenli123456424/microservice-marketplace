@@ -177,10 +177,17 @@ public class UserController {
     }
 
     @PostMapping("/login")
-    public Map<String, String> login(@RequestBody LoginRequest loginRequest) {
+    public Map<String, Object> login(@RequestBody LoginRequest loginRequest) {
         String token = userService.login(loginRequest.getUsername(), loginRequest.getPassword());
-        //为了方便前端使用，我们将token包装在json对象中返回给前端
-        return Collections.singletonMap("token", token);
+        
+        // 获取用户信息
+        User user = userService.findByUsername(loginRequest.getUsername());
+        
+        Map<String, Object> result = new HashMap<>();
+        result.put("token", token);
+        result.put("user", user);
+        
+        return result;
     }
 
     // 发送验证码
@@ -192,9 +199,17 @@ public class UserController {
 
     // 验证码登录
     @PostMapping("/verify-code")
-    public Map<String, String> verifyCode(@RequestBody VerifyCodeRequest request) {
+    public Map<String, Object> verifyCode(@RequestBody VerifyCodeRequest request) {
         String token = userService.verifyCodeAndLogin(request.getEmail(), request.getCode());
-        return Collections.singletonMap("token", token);
+        
+        // 获取用户信息
+        User user = userService.findByEmail(request.getEmail());
+        
+        Map<String, Object> result = new HashMap<>();
+        result.put("token", token);
+        result.put("user", user);
+        
+        return result;
     }
 
     // 忘记密码 - 发送重置密码验证码

@@ -6,6 +6,9 @@ import java.util.List;
 @Data
 public class FilterDimensionVO {
     private Integer dimensionId;
+    private Integer mainId;
+    private Integer subId;
+    private Integer parentId;
     private String name;
     private Integer level;
     private Integer sortOrder;

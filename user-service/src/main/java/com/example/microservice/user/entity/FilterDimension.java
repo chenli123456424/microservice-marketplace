@@ -5,6 +5,8 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
+import java.time.LocalDateTime;
+
 @Data
 @TableName("filter_dimension")
 public class FilterDimension {
@@ -16,4 +18,7 @@ public class FilterDimension {
     private String name;
     private Integer level;
     private Integer sortOrder;
+    private Integer status;
+    private LocalDateTime createTime;
+    private LocalDateTime updateTime;
 }

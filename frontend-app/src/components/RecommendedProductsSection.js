@@ -1,11 +1,49 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+
+// 定义API基础URL
+const API_BASE_URL = 'http://localhost:8081/api';
 
 const RecommendedProductsSection = () => {
-    // 价格生成函数
-    const generatePrice = (itemName) => {
-        const hash = itemName.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-        return (hash % 1000) + 100; // 价格范围 100-1100
-    };
+    const navigate = useNavigate();
+    const [recommendedProducts, setRecommendedProducts] = useState({
+        hotRecommended: [],
+        newArrival: [],
+        limitedOffer: [],
+        bestSeller: []
+    });
+    const [loading, setLoading] = useState(false);
+    
+    // 推荐类型映射
+    const recommendationTypes = [
+        { key: 'hotRecommended', title: '热门推荐' },
+        { key: 'newArrival', title: '新品上市' },
+        { key: 'limitedOffer', title: '限时特惠' },
+        { key: 'bestSeller', title: '爆款热销' }
+    ];
+    
+    // 获取推荐商品数据
+    useEffect(() => {
+        const fetchRecommendedProducts = async () => {
+            setLoading(true);
+            try {
+                const response = await axios.get(`${API_BASE_URL}/recommended-products-with-images`);
+                
+                if (response.data.code === 200 && response.data.data) {
+                    setRecommendedProducts(response.data.data);
+                } else {
+                    console.error('获取推荐商品失败:', response.data.message);
+                }
+            } catch (error) {
+                console.error('获取推荐商品失败:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        
+        fetchRecommendedProducts();
+    }, []);
 
     return (
         <div className="recommended-products-grid">
@@ -102,34 +140,148 @@ const RecommendedProductsSection = () => {
                 `}
             </style>
             
-            {['热门推荐', '新品上市', '限时特惠', '爆款热销'].map((title, index) => (
-                <div key={index} className="product-card">
-                    <h4 className="product-card-title">
-                        {title}
-                    </h4>
-                    <div className="product-image-container">
-                        {/* 使用背景图方式展示占位图片 */}
-                        <div 
-                            className="product-image-background"
-                            style={{
-                                backgroundImage: `url(https://via.placeholder.com/300x200?text=${encodeURIComponent(title)})`
-                            }}
-                        />
-                        {/* 添加文字标签 */}
-                        <div className="product-label">
-                            {title}
+            {loading ? (
+                // 加载状态
+                recommendationTypes.map((type, index) => (
+                    <div key={index} className="product-card">
+                        <h4 className="product-card-title">
+                            {type.title}
+                        </h4>
+                        <div className="product-image-container">
+                            <div 
+                                className="product-image-background"
+                                style={{
+                                    backgroundColor: '#f0f0f0',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    color: '#999'
+                                }}
+                            >
+                                加载中...
+                            </div>
+                        </div>
+                        <div className="price-button-container">
+                            <span className="product-price">
+                                加载中...
+                            </span>
+                            <button className="buy-button" disabled>
+                                立即购买
+                            </button>
                         </div>
                     </div>
-                    <div className="price-button-container">
-                        <span className="product-price">
-                            ¥{generatePrice(title)}
-                        </span>
-                        <button className="buy-button">
-                            立即购买
-                        </button>
-                    </div>
-                </div>
-            ))}
+                ))
+            ) : (
+                // 真实数据渲染
+                recommendationTypes.map((type, index) => {
+                    const products = recommendedProducts[type.key] || [];
+                    const product = products.length > 0 ? products[0] : null;
+                    
+                    return (
+                        <div 
+                            key={index} 
+                            className="product-card"
+                            onClick={() => product && navigate(`/product/${product.productId}`)}
+                            style={{ cursor: product ? 'pointer' : 'default' }}
+                        >
+                            <h4 className="product-card-title">
+                                {type.title}
+                            </h4>
+                            <div className="product-image-container">
+                                {product ? (
+                                    <>
+                                        {/* 使用商品真实图片 */}
+                                        {product.thumbnailUrl ? (
+                                            <img 
+                                                src={`http://localhost:8081${product.thumbnailUrl}?t=${new Date().getTime()}`}
+                                                alt={product.name}
+                                                style={{
+                                                    width: '100%',
+                                                    height: '100%',
+                                                    objectFit: 'cover',
+                                                    borderRadius: '8px'
+                                                }}
+                                                onError={(e) => {
+                                                    e.target.onerror = null;
+                                                    e.target.src = 'data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%22150%22%20height%3D%22150%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20150%20150%22%20preserveAspectRatio%3D%22none%22%3E%3Cdefs%3E%3Cstyle%20type%3D%22text%2Fcss%22%3E%23holder_1687e593c1e%20text%20%7B%20fill%3A%23999%3Bfont-weight%3Anormal%3Bfont-family%3AArial%2C%20Helvetica%2C%20Open%20Sans%2C%20sans-serif%2C%20monospace%3Bfont-size%3A14pt%20%7D%20%3C%2Fstyle%3E%3C%2Fdefs%3E%3Cg%20id%3D%22holder_1687e593c1e%22%3E%3Crect%20width%3D%22150%22%20height%3D%22150%22%20fill%3D%22%23f5f5f5%22%3E%3C%2Frect%3E%3Cg%3E%3Ctext%20x%3D%2250%22%20y%3D%2280%22%3E无图片%3C%2Ftext%3E%3C%2Fg%3E%3C%2Fg%3E%3C%2Fsvg%3E';
+                                                }}
+                                            />
+                                        ) : (
+                                            <div 
+                                                className="product-image-background"
+                                                style={{
+                                                    backgroundColor: '#f0f0f0',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    color: '#999'
+                                                }}
+                                            >
+                                                暂无图片
+                                            </div>
+                                        )}
+                                        {/* 添加推荐类型标签 */}
+                                        <div className="product-label">
+                                            {type.title}
+                                        </div>
+                                    </>
+                                ) : (
+                                    <div 
+                                        className="product-image-background"
+                                        style={{
+                                            backgroundColor: '#f0f0f0',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            color: '#999'
+                                        }}
+                                    >
+                                        暂无商品
+                                    </div>
+                                )}
+                            </div>
+                            
+                            {/* 商品名称显示 */}
+                            {product && (
+                                <div style={{
+                                    marginTop: '8px',
+                                    fontSize: '14px',
+                                    color: '#333',
+                                    textAlign: 'center',
+                                    height: '40px',
+                                    overflow: 'hidden',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center'
+                                }}>
+                                    {product.name}
+                                </div>
+                            )}
+                            <div className="price-button-container">
+                                {product ? (
+                                    <>
+                                        <span className="product-price">
+                                            ¥{product.price}
+                                        </span>
+                                        <button className="buy-button">
+                                            立即购买
+                                        </button>
+                                    </>
+                                ) : (
+                                    <>
+                                        <span className="product-price">
+                                            暂无价格
+                                        </span>
+                                        <button className="buy-button" disabled>
+                                            立即购买
+                                        </button>
+                                    </>
+                                )}
+                            </div>
+                        </div>
+                    );
+                })
+            )}
         </div>
     );
 };
