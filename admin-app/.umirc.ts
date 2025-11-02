@@ -38,6 +38,11 @@ export default defineConfig({
       name: '分类管理',
       path: '/category',
       component: './Category',
+    },
+    {
+      name: '公告管理',
+      path: '/announcement',
+      component: './Announcement',
     }
   ],
   npmClient: 'npm',

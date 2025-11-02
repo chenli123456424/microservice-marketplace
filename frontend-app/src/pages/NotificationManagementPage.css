@@ -1,0 +1,383 @@
+.notification-management-page {
+  min-height: calc(100vh - 120px);
+  background-color: #f7f7f7;
+  padding: 40px 250px;
+  display: flex;
+  flex-direction: column;
+}
+
+.notification-management-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+  margin-bottom: 80px; /* 与底部导航栏保持距离 */
+}
+
+.notification-management-title {
+  font-size: 32px;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 30px;
+  text-align: center;
+}
+
+/* 标签页样式 */
+.notification-tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 30px;
+  border-bottom: 2px solid #e5e5e5;
+  padding-bottom: 0;
+}
+
+.notification-tab {
+  padding: 12px 24px;
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  font-size: 16px;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  margin-bottom: -2px;
+}
+
+.notification-tab:hover {
+  color: #c57237;
+}
+
+.notification-tab.active {
+  color: #c57237;
+  border-bottom-color: #c57237;
+  font-weight: 600;
+}
+
+.tab-count {
+  color: #999;
+  font-size: 14px;
+  margin-left: 4px;
+}
+
+.notification-tab.active .tab-count {
+  color: #c57237;
+}
+
+/* 公告列表样式 */
+.notification-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.notification-item-card {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 1px solid #f0f0f0;
+}
+
+.notification-item-card:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  transform: translateY(-2px);
+  border-color: #c57237;
+}
+
+.notification-item-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.notification-type-tag {
+  padding: 4px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  border: 1px solid;
+  white-space: nowrap;
+}
+
+.notification-item-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #333;
+  margin: 0;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.notification-item-preview {
+  font-size: 14px;
+  color: #666;
+  line-height: 1.6;
+  margin-bottom: 16px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+}
+
+.notification-item-preview p {
+  margin: 0;
+}
+
+.notification-item-preview img {
+  max-width: 100%;
+  height: auto;
+}
+
+.notification-item-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 12px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.notification-item-time {
+  font-size: 12px;
+  color: #999;
+}
+
+.notification-item-more {
+  font-size: 14px;
+  color: #c57237;
+  font-weight: 500;
+}
+
+/* 加载和空状态 */
+.notification-loading,
+.notification-empty {
+  text-align: center;
+  padding: 80px 20px;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.notification-empty-icon {
+  font-size: 64px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.notification-empty-text {
+  font-size: 16px;
+  color: #999;
+}
+
+/* 分页控制栏样式 */
+.notification-pagination-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding: 15px 20px;
+  background: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.pagination-info {
+  font-size: 14px;
+  color: #666;
+}
+
+.total-count {
+  font-weight: 600;
+  color: #c57237;
+  margin: 0 4px;
+}
+
+.pagination-settings {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pagination-settings label {
+  font-size: 14px;
+  color: #666;
+}
+
+.page-size-select {
+  padding: 6px 12px;
+  border: 1px solid #d9d9d9;
+  border-radius: 4px;
+  font-size: 14px;
+  color: #333;
+  background: #ffffff;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.3s ease;
+}
+
+.page-size-select:hover {
+  border-color: #c57237;
+}
+
+.page-size-select:focus {
+  border-color: #c57237;
+  box-shadow: 0 0 0 2px rgba(197, 114, 55, 0.1);
+}
+
+/* 分页导航样式 */
+.notification-pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  margin-top: 30px;
+  padding: 20px;
+  background: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.pagination-button {
+  padding: 8px 16px;
+  border: 1px solid #d9d9d9;
+  border-radius: 4px;
+  background: #ffffff;
+  color: #333;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.pagination-button:hover:not(:disabled) {
+  border-color: #c57237;
+  color: #c57237;
+}
+
+.pagination-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pagination-numbers {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.pagination-number {
+  min-width: 32px;
+  height: 32px;
+  padding: 0 8px;
+  border: 1px solid #d9d9d9;
+  border-radius: 4px;
+  background: #ffffff;
+  color: #333;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.pagination-number:hover {
+  border-color: #c57237;
+  color: #c57237;
+}
+
+.pagination-number.active {
+  background: #c57237;
+  border-color: #c57237;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.pagination-ellipsis {
+  padding: 0 8px;
+  color: #999;
+  font-size: 14px;
+}
+
+.pagination-jump {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 16px;
+  font-size: 14px;
+  color: #666;
+}
+
+.pagination-jump-input {
+  width: 60px;
+  padding: 6px 8px;
+  border: 1px solid #d9d9d9;
+  border-radius: 4px;
+  font-size: 14px;
+  text-align: center;
+  outline: none;
+  transition: all 0.3s ease;
+}
+
+.pagination-jump-input:focus {
+  border-color: #c57237;
+  box-shadow: 0 0 0 2px rgba(197, 114, 55, 0.1);
+}
+
+/* 响应式调整 */
+@media (max-width: 1200px) {
+  .notification-management-page {
+    padding: 30px 100px;
+  }
+}
+
+@media (max-width: 768px) {
+  .notification-management-page {
+    padding: 20px;
+  }
+
+  .notification-management-title {
+    font-size: 24px;
+  }
+
+  .notification-tabs {
+    flex-wrap: wrap;
+  }
+
+  .notification-tab {
+    padding: 8px 16px;
+    font-size: 14px;
+  }
+
+  .notification-item-card {
+    padding: 16px;
+  }
+
+  .notification-item-title {
+    font-size: 18px;
+  }
+
+  .notification-pagination-controls {
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+  }
+
+  .notification-pagination {
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  .pagination-numbers {
+    flex-wrap: wrap;
+  }
+
+  .pagination-jump {
+    margin-left: 0;
+    width: 100%;
+    justify-content: center;
+    margin-top: 12px;
+  }
+}
+

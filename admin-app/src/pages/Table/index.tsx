@@ -306,6 +306,13 @@ const TableList: React.FC<unknown> = () => {
                     }
                 }
                 columns={tableColumns}
+                pagination={{
+                    defaultPageSize: 10,
+                    pageSizeOptions: ['10', '20', '50', '100'],
+                    showSizeChanger: true,
+                    showQuickJumper: true,
+                    showTotal: (total) => `共 ${total} 条`,
+                }}
                 rowSelection={{
                     onChange: (_, selectedRows) => setSelectedRows(selectedRows),
                 }}

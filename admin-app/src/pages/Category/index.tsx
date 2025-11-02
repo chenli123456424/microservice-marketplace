@@ -507,6 +507,13 @@ const CategoryManagement: React.FC = () => {
                         };
                     }}
                     columns={mainCategoryColumns}
+                    pagination={{
+                        defaultPageSize: 10,
+                        pageSizeOptions: ['10', '20', '50', '100'],
+                        showSizeChanger: true,
+                        showQuickJumper: true,
+                        showTotal: (total) => `共 ${total} 条`,
+                    }}
                     scroll={{ x: 1000 }}
                     tableStyle={{ minWidth: '1000px' }}
                 />
@@ -546,6 +553,13 @@ const CategoryManagement: React.FC = () => {
                         };
                     }}
                     columns={subCategoryColumns}
+                    pagination={{
+                        defaultPageSize: 10,
+                        pageSizeOptions: ['10', '20', '50', '100'],
+                        showSizeChanger: true,
+                        showQuickJumper: true,
+                        showTotal: (total) => `共 ${total} 条`,
+                    }}
                     scroll={{ x: 1200 }}
                     tableStyle={{ minWidth: '1200px' }}
                 />
@@ -584,6 +598,13 @@ const CategoryManagement: React.FC = () => {
                         };
                     }}
                     columns={brandColumns}
+                    pagination={{
+                        defaultPageSize: 10,
+                        pageSizeOptions: ['10', '20', '50', '100'],
+                        showSizeChanger: true,
+                        showQuickJumper: true,
+                        showTotal: (total) => `共 ${total} 条`,
+                    }}
                     scroll={{ x: 1000 }}
                     tableStyle={{ minWidth: '1000px' }}
                 />
@@ -624,6 +645,13 @@ const CategoryManagement: React.FC = () => {
                         };
                     }}
                     columns={filterDimensionColumns}
+                    pagination={{
+                        defaultPageSize: 10,
+                        pageSizeOptions: ['10', '20', '50', '100'],
+                        showSizeChanger: true,
+                        showQuickJumper: true,
+                        showTotal: (total) => `共 ${total} 条`,
+                    }}
                     scroll={{ x: 1400 }}
                     tableStyle={{ minWidth: '1400px' }}
                 />

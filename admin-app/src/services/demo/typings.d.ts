@@ -518,4 +518,32 @@ declare namespace API {
       data: API.Brand[];
       success: boolean;
     }
+
+    // 公告相关类型
+    export interface Announcement {
+      id?: number;
+      title?: string;
+      content?: string;
+      type?: string; // ACTIVITY-活动通知, SYSTEM-系统通知, MESSAGE-私信
+      status?: number;
+      priority?: number;
+      startTime?: string;
+      endTime?: string;
+      createTime?: string;
+      updateTime?: string;
+    }
+
+    export interface Result_Announcement_ {
+      code: number;
+      message: string;
+      data: API.Announcement;
+      success: boolean;
+    }
+
+    export interface Result_List_Announcement_ {
+      code: number;
+      message: string;
+      data: API.Announcement[];
+      success: boolean;
+    }
 }

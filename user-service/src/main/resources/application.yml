@@ -4,6 +4,9 @@ server:
 spring:
   application:
     name: user-service # 服务名称
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: GMT+8
   datasource:
     url: jdbc:mysql://localhost:3307/ecommerce_user?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai
     username: root

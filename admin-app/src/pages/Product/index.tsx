@@ -745,6 +745,13 @@ const ProductList: React.FC = () => {
                     return fetchData(mergedParams, sort, filter);
                 }}
                 columns={columns}
+                pagination={{
+                    defaultPageSize: 10,
+                    pageSizeOptions: ['10', '20', '50', '100'],
+                    showSizeChanger: true,
+                    showQuickJumper: true,
+                    showTotal: (total) => `共 ${total} 条`,
+                }}
                 // 添加表格样式，确保表头固定
                 tableStyle={{
                     minWidth: '1500px' // 设置表格最小宽度

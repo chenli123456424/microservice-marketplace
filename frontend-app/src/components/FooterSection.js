@@ -10,12 +10,17 @@ const FooterSection = () => {
                     .footer-container {
                         background-color: #fff; /* 白色背景 */
                         padding: 20px 20px; /* 内边距 */
+                        width: 100%; /* 全宽 */
+                        box-sizing: border-box; /* 包含padding */
                     }
                     
                     /* Footer内容容器 */
                     .footer-content {
-                        width: 1350px; /* 固定宽度 */
+                        max-width: 1350px; /* 最大宽度 */
+                        width: 100%; /* 全宽 */
                         margin: 0 auto; /* 水平居中 */
+                        padding: 0 20px; /* 左右内边距 */
+                        box-sizing: border-box; /* 包含padding */
                     }
                     
                     /* 顶部服务信息条容器 */

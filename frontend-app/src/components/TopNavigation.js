@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
+import { calculateUnreadCount, markAnnouncementAsRead } from '../utils/notificationHelper';
 
 function TopNavigation() {
     const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
@@ -13,6 +14,9 @@ function TopNavigation() {
     const [cartItems, setCartItems] = useState([]);
     const [cartLoading, setCartLoading] = useState(false);
     const [avatarVersion, setAvatarVersion] = useState(0); // 头像版本号，仅在URL变化时更新
+    const [announcementCount, setAnnouncementCount] = useState(0); // 公告数量
+    const [isNotificationMenuOpen, setIsNotificationMenuOpen] = useState(false);
+    const [announcements, setAnnouncements] = useState([]);
     
     const { isAuthenticated, logout, token, user } = useAuth();
     const navigate = useNavigate();
@@ -108,6 +112,168 @@ function TopNavigation() {
             window.removeEventListener('cartUpdated', handleCartUpdate);
             console.log('TopNavigation: 已移除cartUpdated事件监听器');
         };
+    }, []);
+
+    // 检查公告是否在有效时间范围内（用于导航栏显示）
+    // 导航栏应该显示所有已发布的公告（包括未开始的），但不包括已过期的
+    const isAnnouncementValid = (announcement) => {
+        if (!announcement) return false;
+        
+        // 必须已发布
+        if (announcement.status !== 1) {
+            return false;
+        }
+        
+        // 检查结束时间（未过期或未设置）
+        const now = new Date();
+        if (announcement.endTime) {
+            const endTime = new Date(announcement.endTime);
+            if (now > endTime) {
+                return false; // 已过期
+            }
+        }
+        
+        // 导航栏显示所有未过期的已发布公告（包括未开始的）
+        // 这样用户可以在导航栏看到未来要推送的通知
+        return true;
+    };
+    
+    // 检查公告是否已开始（用于计算未读数量）
+    // 只有已开始且未过期的通知才计入未读数量
+    const isAnnouncementStarted = (announcement) => {
+        if (!announcement) return false;
+        if (announcement.status !== 1) return false;
+        
+        const now = new Date();
+        
+        // 检查开始时间（已开始或未设置）
+        if (announcement.startTime) {
+            const startTime = new Date(announcement.startTime);
+            if (now < startTime) {
+                return false; // 还未开始
+            }
+        }
+        
+        // 检查结束时间（未过期或未设置）
+        if (announcement.endTime) {
+            const endTime = new Date(announcement.endTime);
+            if (now > endTime) {
+                return false; // 已过期
+            }
+        }
+        
+        return true;
+    };
+
+    // 获取公告数据
+    const fetchAnnouncements = async () => {
+        try {
+            console.log('[TopNavigation] 开始获取公告数据');
+            const response = await axios.get('http://localhost:8081/api/announcement/active');
+            if (response.data && response.data.code === 200 && response.data.data) {
+                const activeAnnouncements = response.data.data || [];
+                console.log('[TopNavigation] 后端返回公告数量:', activeAnnouncements.length);
+                
+                // 过滤掉已过期的公告（但保留未开始的）
+                const validAnnouncements = activeAnnouncements.filter(isAnnouncementValid);
+                console.log('[TopNavigation] 过滤后有效公告数量:', validAnnouncements.length);
+                
+                setAnnouncements(validAnnouncements);
+                
+                // 计算未读通知数量（只计算已开始且有效的未读通知）
+                const startedAnnouncements = validAnnouncements.filter(isAnnouncementStarted);
+                const unreadCount = calculateUnreadCount(startedAnnouncements);
+                console.log('[TopNavigation] 已开始的通知数量:', startedAnnouncements.length);
+                console.log('[TopNavigation] 未读通知数量:', unreadCount);
+                setAnnouncementCount(unreadCount);
+            } else {
+                console.log('[TopNavigation] API返回数据格式错误');
+                setAnnouncements([]);
+                setAnnouncementCount(0);
+            }
+        } catch (error) {
+            console.error('[TopNavigation] 获取公告失败:', error);
+            setAnnouncements([]);
+            setAnnouncementCount(0);
+        }
+    };
+
+    // 初始加载公告
+    useEffect(() => {
+        fetchAnnouncements();
+    }, []);
+
+    // 监听公告更新事件（包括跨窗口通信）
+    useEffect(() => {
+        console.log('[TopNavigation] 注册公告更新事件监听器');
+        
+        // 监听当前窗口的 dataUpdated 事件
+        const handleDataUpdated = (e) => {
+            console.log('[TopNavigation] 收到dataUpdated事件:', e.detail);
+            if (e.detail?.dataType === 'announcements') {
+                console.log('[TopNavigation] 触发公告刷新');
+                fetchAnnouncements();
+            }
+        };
+        
+        // 监听 localStorage 变化（用于跨窗口/标签页通信）
+        const handleStorageChange = (e) => {
+            if (e.key && e.key.startsWith('announcementUpdated_')) {
+                try {
+                    const data = JSON.parse(e.newValue || e.oldValue || '{}');
+                    console.log('[TopNavigation] 收到localStorage通知:', data);
+                    if (data.dataType === 'announcements') {
+                        console.log('[TopNavigation] 从localStorage触发公告刷新');
+                        fetchAnnouncements();
+                    }
+                } catch (err) {
+                    console.error('[TopNavigation] 解析localStorage数据失败:', err);
+                }
+            }
+        };
+
+        // 监听通知已读事件
+        const handleNotificationRead = (e) => {
+            if (e.detail?.announcementId) {
+                // 通知被标记为已读，重新计算未读数量
+                fetchAnnouncements();
+            }
+        };
+
+        window.addEventListener('dataUpdated', handleDataUpdated);
+        window.addEventListener('storage', handleStorageChange);
+        window.addEventListener('notificationRead', handleNotificationRead);
+
+        return () => {
+            window.removeEventListener('dataUpdated', handleDataUpdated);
+            window.removeEventListener('storage', handleStorageChange);
+            window.removeEventListener('notificationRead', handleNotificationRead);
+        };
+    }, []);
+    
+    // 监听页面可见性变化，当用户切换回标签页时刷新公告
+    useEffect(() => {
+        const handleVisibilityChange = () => {
+            if (!document.hidden) {
+                console.log('[TopNavigation] 页面变为可见，刷新公告');
+                fetchAnnouncements();
+            }
+        };
+        
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        
+        return () => {
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+        };
+    }, []);
+    
+    // 定期刷新公告（每30秒，与通知弹窗同步）
+    useEffect(() => {
+        const interval = setInterval(() => {
+            fetchAnnouncements();
+        }, 30000);
+        
+        return () => clearInterval(interval);
     }, []);
 
     // 监听user.avatar变化，仅在URL真正变化时更新版本号
@@ -389,24 +555,29 @@ function TopNavigation() {
                 /* 购物车容器 */
                 .cart-container {
                     position: relative; /* 相对定位 */
-                    margin-right: 20px; /* 右外边距 */
+                    display: inline-block; /* 内联块，与其他按钮在同一行 */
+                    vertical-align: middle; /* 垂直居中对齐 */
                 }
                 
                 /* 通知徽章样式 */
                 .notification-badge {
                     position: absolute; /* 绝对定位 */
-                    top: -5px; /* 距离顶部距离 */
-                    right: -5px; /* 距离右侧距离 */
-                    background-color: red; /* 背景颜色 */
+                    top: -2px; /* 距离顶部距离 */
+                    right: -2px; /* 距离右侧距离 */
+                    background-color: #ff4d4f; /* 背景颜色 */
                     color: white; /* 文字颜色 */
                     border-radius: 50%; /* 圆角（圆形） */
-                    font-size: 12px; /* 字体大小 */
-                    width: 18px; /* 宽度 */
-                    height: 18px; /* 高度 */
+                    font-size: 10px; /* 字体大小 */
+                    min-width: 14px; /* 最小宽度 */
+                    height: 14px; /* 高度 */
                     display: flex; /* 弹性布局 */
                     align-items: center; /* 垂直居中对齐 */
                     justify-content: center; /* 水平居中对齐 */
                     font-weight: bold; /* 粗体 */
+                    padding: 0 3px; /* 内边距，支持多位数 */
+                    line-height: 1; /* 行高 */
+                    box-sizing: border-box; /* 盒模型 */
+                    border: 1.5px solid #ffffff; /* 白色边框 */
                 }
                 
                 /* 购物车下拉菜单样式 */
@@ -468,9 +639,43 @@ function TopNavigation() {
                     margin-top: 10px; /* 上外边距 */
                 }
                 
-                /* 通知容器样式 */
-                .notification-container {
-                    position: relative; /* 相对定位 */
+                /* 通知按钮样式 - 直接使用button，无外层div */
+                .notification-button {
+                    position: relative; /* 相对定位，用于下拉菜单定位 */
+                }
+                
+                /* 通知下拉菜单样式 - 与购物车下拉菜单完全一致 */
+                .notification-button .notification-dropdown {
+                    position: absolute; /* 绝对定位 */
+                    top: 100%; /* 距离顶部距离 */
+                    right: 0; /* 距离右侧距离 */
+                    background-color: #fff; /* 背景颜色 */
+                    box-shadow: 0 4px 6px rgba(0,0,0,0.1); /* 阴影效果 */
+                    min-width: 250px; /* 最小宽度 */
+                    z-index: 1001; /* 层级 */
+                    border: 1px solid #e5e5e5; /* 边框 */
+                    padding: 15px; /* 内边距 */
+                    margin-top: 5px; /* 与按钮的间距 */
+                }
+                
+                /* 通知头部样式 - 与购物车头部完全一致 */
+                .notification-header {
+                    font-weight: bold; /* 粗体 */
+                    margin-bottom: 10px; /* 下外边距 */
+                }
+                
+                /* 通知项容器样式 - 与购物车商品容器完全一致 */
+                .notification-items {
+                    max-height: 200px; /* 最大高度 */
+                    overflow-y: auto; /* 垂直滚动条 */
+                }
+                
+                /* 通知项样式 - 与购物车商品项完全一致 */
+                .notification-item {
+                    display: flex; /* 弹性布局 */
+                    margin-bottom: 10px; /* 下外边距 */
+                    padding-bottom: 10px; /* 下内边距 */
+                    border-bottom: 1px solid #eee; /* 底部边框 */
                 }
                 
                 /* 热门搜索容器样式 */
@@ -720,15 +925,96 @@ function TopNavigation() {
                         )}
                     </div>
 
-                    {/* 消息通知 */}
-                    <div className="notification-container">
-                        <button className="menu-button">
-                            🔔
+                    {/* 消息通知 - 直接使用button，无外层div */}
+                    <button 
+                        className="menu-button notification-button"
+                        style={{
+                            background: 'none',
+                            backgroundColor: 'transparent',
+                            border: 'none',
+                            padding: 0,
+                            margin: 0,
+                            marginLeft: '10px',
+                            boxShadow: 'none',
+                            outline: 'none',
+                            position: 'relative',
+                            display: 'inline-block',
+                            verticalAlign: 'middle'
+                        }}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            navigate('/notifications');
+                        }}
+                        onMouseEnter={() => setIsNotificationMenuOpen(true)}
+                        onMouseLeave={() => setIsNotificationMenuOpen(false)}
+                    >
+                        🔔
+                        {announcementCount > 0 && (
                             <span className="notification-badge">
-                                2
+                                {announcementCount > 99 ? '99+' : announcementCount}
                             </span>
-                        </button>
-                    </div>
+                        )}
+                        {isNotificationMenuOpen && (
+                            <div className="notification-dropdown">
+                                <div className="notification-header">
+                                    公告通知 ({announcementCount})
+                                </div>
+                                <div className="notification-items">
+                                    {announcements.length > 0 ? (
+                                        announcements.slice(0, 5).map((announcement) => (
+                                            <div 
+                                                key={announcement.id} 
+                                                className="notification-item"
+                                                onClick={() => {
+                                                    // 标记为已读
+                                                    markAnnouncementAsRead(announcement.id);
+                                                    // 直接跳转到通知详情页
+                                                    navigate(`/notification/${announcement.id}`, {
+                                                        state: { announcement }
+                                                    });
+                                                    setIsNotificationMenuOpen(false);
+                                                }}
+                                            >
+                                                <div>
+                                                    <div style={{ 
+                                                        fontSize: '12px', 
+                                                        fontWeight: 'bold',
+                                                        marginBottom: '2px',
+                                                        overflow: 'hidden',
+                                                        textOverflow: 'ellipsis',
+                                                        whiteSpace: 'nowrap',
+                                                        maxWidth: '200px'
+                                                    }}>
+                                                        📢 {announcement.title}
+                                                    </div>
+                                                    <div style={{ fontSize: '11px', color: '#666' }}>
+                                                        {announcement.createTime ? 
+                                                            new Date(announcement.createTime).toLocaleDateString('zh-CN') 
+                                                            : ''}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <div style={{ padding: '10px', textAlign: 'center', color: '#666' }}>
+                                            暂无公告
+                                        </div>
+                                    )}
+                                    {announcements.length > 5 && (
+                                        <div style={{ 
+                                            padding: '5px 10px', 
+                                            textAlign: 'center', 
+                                            color: '#666', 
+                                            fontSize: '12px',
+                                            borderTop: '1px solid #eee'
+                                        }}>
+                                            还有 {announcements.length - 5} 条公告...
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+                    </button>
                 </div>
             </div>
 
