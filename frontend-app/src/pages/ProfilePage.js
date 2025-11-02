@@ -96,18 +96,26 @@ function ProfilePage() {
             if (response.data.code === 200) {
                 const avatarUrl = response.data.data;
                 setFormData(prev => ({ ...prev, avatar: avatarUrl }));
-                setAvatarPreview(`http://localhost:8081${avatarUrl}`);
+                setAvatarPreview(`http://localhost:8081${avatarUrl}?t=${Date.now()}`); // 添加时间戳防止缓存
                 setMessage({ type: 'success', text: '头像上传成功' });
-                // 重新获取最新用户信息并更新到Context，实现全局实时刷新
-                // 这会自动触发所有使用user的组件（如TopNavigation）重新渲染
-                const currentUserResponse = await axios.get('http://localhost:8081/api/user/current', {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
+                
+                // 立即更新Context，使用最新的avatarUrl
+                // 先获取完整的用户信息，确保数据完整
+                try {
+                    const currentUserResponse = await axios.get('http://localhost:8081/api/user/current', {
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+                    if (currentUserResponse.data.code === 200 && currentUserResponse.data.data) {
+                        // 更新Context，这会触发TopNavigation等组件重新渲染
+                        updateUser(currentUserResponse.data.data);
+                        console.log('用户信息已更新到Context，头像URL:', currentUserResponse.data.data.avatar);
                     }
-                });
-                if (currentUserResponse.data.code === 200 && currentUserResponse.data.data) {
-                    updateUser(currentUserResponse.data.data);
+                } catch (error) {
+                    console.error('获取最新用户信息失败:', error);
                 }
+                
                 // 更新本地用户信息用于页面显示
                 await fetchUserInfo();
             } else {

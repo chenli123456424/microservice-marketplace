@@ -371,7 +371,7 @@ const ProductFilter = () => {
     // 使用数据刷新Hook，监听商品数据更新
     // 启用轮询和事件通知机制，当管理端修改商品后自动刷新
     useDataRefresh(fetchProducts, 'products', {
-        pollingInterval: 60000, // 1分钟轮询一次，确保获取最新数据
+        pollingInterval: 30000, // 30秒轮询一次，确保获取最新数据
         enableVisibilityRefresh: true // 页面从隐藏切换到可见时自动刷新
     });
 

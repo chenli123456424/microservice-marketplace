@@ -4,8 +4,10 @@
 import * as UserController from './UserController';
 import * as ProductController from './ProductController';
 import * as CategoryController from './CategoryController';
+import * as AnnouncementController from './AnnouncementController';
 export default {
   UserController,
   ProductController,
   CategoryController,
+  AnnouncementController,
 };

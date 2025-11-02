@@ -49,7 +49,7 @@ const RecommendedProductsSection = () => {
 
     // 使用数据刷新Hook，监听商品数据更新
     useDataRefresh(fetchRecommendedProducts, 'products', {
-        pollingInterval: 60000, // 1分钟轮询一次
+        pollingInterval: 30000, // 30秒轮询一次，获取最新推荐商品
         enableVisibilityRefresh: true
     });
 

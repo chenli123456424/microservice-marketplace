@@ -12,6 +12,7 @@ function TopNavigation() {
     const [hotSearchKeywords, setHotSearchKeywords] = useState([]);
     const [cartItems, setCartItems] = useState([]);
     const [cartLoading, setCartLoading] = useState(false);
+    const [avatarVersion, setAvatarVersion] = useState(0); // 头像版本号，仅在URL变化时更新
     
     const { isAuthenticated, logout, token, user } = useAuth();
     const navigate = useNavigate();
@@ -109,8 +110,22 @@ function TopNavigation() {
         };
     }, []);
 
-    // TopNavigation直接使用Context中的user，当Context更新时会自动重新渲染
-    // 不需要额外的事件监听，React Context机制会自动处理
+    // 监听user.avatar变化，仅在URL真正变化时更新版本号
+    useEffect(() => {
+        if (user?.avatar) {
+            // 只在avatar URL变化时更新版本号，避免不必要的刷新
+            setAvatarVersion(prev => {
+                // 使用URL作为版本标识，只有URL变化时才增加版本号
+                const currentAvatar = user.avatar;
+                const storedAvatar = sessionStorage.getItem('lastAvatar');
+                if (storedAvatar !== currentAvatar) {
+                    sessionStorage.setItem('lastAvatar', currentAvatar);
+                    return prev + 1;
+                }
+                return prev;
+            });
+        }
+    }, [user?.avatar]);
 
     // 处理搜索框点击
     const handleSearchClick = () => {
@@ -574,12 +589,16 @@ function TopNavigation() {
                             <button className="menu-button">
                                 {user?.avatar ? (
                                     <img 
-                                        src={`http://localhost:8081${user.avatar}`}
+                                        key={`avatar-${user.avatar}-${avatarVersion}`} // 使用avatar版本确保头像更新时重新渲染
+                                        src={`http://localhost:8081${user.avatar}${user.avatar.includes('?') ? '&' : '?'}v=${avatarVersion}`}
                                         alt="用户头像"
                                         className="user-avatar"
                                         onError={(e) => {
+                                            console.error('头像加载失败:', user.avatar);
                                             e.target.style.display = 'none';
-                                            e.target.nextSibling.style.display = 'block';
+                                            if (e.target.nextSibling) {
+                                                e.target.nextSibling.style.display = 'block';
+                                            }
                                         }}
                                     />
                                 ) : null}
