@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import RightSidebar from '../components/RightSidebar';
 import FooterSection from '../components/FooterSection';
 import { useAuth } from '../context/AuthContext';
 import { showModal } from '../utils/modal';
+import { useDataRefresh } from '../hooks/useDataRefresh';
 
 // 定义API基础URL
 const API_BASE_URL = 'http://localhost:8081/api';
@@ -53,68 +54,75 @@ const ProductDetailPage = () => {
     }, []);
     
     // 获取商品详情
-    useEffect(() => {
-        const fetchProductDetail = async () => {
-            if (!productId) return;
+    const fetchProductDetail = useCallback(async () => {
+        if (!productId) return;
 
-            setLoading(true);
-            try {
-                // 获取商品基本信息
-                const productResponse = await axios.get(`${API_BASE_URL}/products/${productId}`);
-                if (productResponse.data.code === 200) {
-                    const productData = productResponse.data.data;
-                    setProduct(productData);
-                    
-                    // 处理商品图片
-                    if (productData.images && productData.images.length > 0) {
-                        // 如果有图片数组，使用图片数组
-                        const imageUrls = productData.images.map(img => 
-                            `http://localhost:8081${img.imageUrl}?t=${new Date().getTime()}`
-                        );
-                        setProductImages(imageUrls);
-                    } else if (productData.thumbnailUrl) {
-                        // 如果只有缩略图，使用缩略图
-                        setProductImages([`http://localhost:8081${productData.thumbnailUrl}?t=${new Date().getTime()}`]);
-                    } else {
-                        // 设置默认图片
-                        setProductImages(['data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%22800%22%20height%3D%22400%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20800%20400%22%20preserveAspectRatio%3D%22none%22%3E%3Cdefs%3E%3Cstyle%20type%3D%22text%2Fcss%22%3E%23holder_1687e593c1e%20text%20%7B%20fill%3A%23999%3Bfont-weight%3Anormal%3Bfont-family%3AArial%2C%20Helvetica%2C%20Open%20Sans%2C%20sans-serif%2C%20monospace%3Bfont-size%3A40pt%20%7D%20%3C%2Fstyle%3E%3C%2Fdefs%3E%3Cg%20id%3D%22holder_1687e593c1e%22%3E%3Crect%20width%3D%22800%22%20height%3D%22400%22%20fill%3D%22%23f8f8f8%22%3E%3C%2Frect%3E%3Cg%3E%3Ctext%20x%3D%22285%22%20y%3D%22220%22%3E暂无图片%3C%2Ftext%3E%3C%2Fg%3E%3C%2Fg%3E%3C%2Fsvg%3E']);
-                    }
+        setLoading(true);
+        try {
+            // 获取商品基本信息
+            const productResponse = await axios.get(`${API_BASE_URL}/products/${productId}`);
+            if (productResponse.data.code === 200) {
+                const productData = productResponse.data.data;
+                setProduct(productData);
+                
+                // 处理商品图片
+                if (productData.images && productData.images.length > 0) {
+                    // 如果有图片数组，使用图片数组
+                    const imageUrls = productData.images.map(img => 
+                        `http://localhost:8081${img.imageUrl}?t=${new Date().getTime()}`
+                    );
+                    setProductImages(imageUrls);
+                } else if (productData.thumbnailUrl) {
+                    // 如果只有缩略图，使用缩略图
+                    setProductImages([`http://localhost:8081${productData.thumbnailUrl}?t=${new Date().getTime()}`]);
+                } else {
+                    // 设置默认图片
+                    setProductImages(['data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%22800%22%20height%3D%22400%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20800%20400%22%20preserveAspectRatio%3D%22none%22%3E%3Cdefs%3E%3Cstyle%20type%3D%22text%2Fcss%22%3E%23holder_1687e593c1e%20text%20%7B%20fill%3A%23999%3Bfont-weight%3Anormal%3Bfont-family%3AArial%2C%20Helvetica%2C%20Open%20Sans%2C%20sans-serif%2C%20monospace%3Bfont-size%3A40pt%20%7D%20%3C%2Fstyle%3E%3C%2Fdefs%3E%3Cg%20id%3D%22holder_1687e593c1e%22%3E%3Crect%20width%3D%22800%22%20height%3D%22400%22%20fill%3D%22%23f8f8f8%22%3E%3C%2Frect%3E%3Cg%3E%3Ctext%20x%3D%22285%22%20y%3D%22220%22%3E暂无图片%3C%2Ftext%3E%3C%2Fg%3E%3C%2Fg%3E%3C%2Fsvg%3E']);
                 }
-
-                // 获取商品通用属性
-                const attrsResponse = await axios.get(`${API_BASE_URL}/products/${productId}/attributes`);
-                if (attrsResponse.data.code === 200) {
-                    setProductAttrs(attrsResponse.data.data);
-                }
-
-                // 获取商品扩展属性
-                const extendResponse = await axios.get(`${API_BASE_URL}/products/${productId}/extend-attributes`);
-                if (extendResponse.data.code === 200) {
-                    setExtendAttrs(extendResponse.data.data);
-                }
-
-                // 获取动态可选项（规格/颜色/服务）
-                const optionsResponse = await axios.get(`${API_BASE_URL}/products/${productId}/options`);
-                if (optionsResponse.data.code === 200) {
-                    const o = optionsResponse.data.data || {};
-                    setOptions({
-                        specs: Array.isArray(o.specs) ? o.specs : [],
-                        colors: Array.isArray(o.colors) ? o.colors : [],
-                        services: Array.isArray(o.services) ? o.services : []
-                    });
-                }
-
-            } catch (error) {
-                console.error('获取商品详情失败:', error);
-                // 如果API返回错误，设置product为null以显示"商品不存在"
-                setProduct(null);
-            } finally {
-                setLoading(false);
             }
-        };
 
-        fetchProductDetail();
+            // 获取商品通用属性
+            const attrsResponse = await axios.get(`${API_BASE_URL}/products/${productId}/attributes`);
+            if (attrsResponse.data.code === 200) {
+                setProductAttrs(attrsResponse.data.data);
+            }
+
+            // 获取商品扩展属性
+            const extendResponse = await axios.get(`${API_BASE_URL}/products/${productId}/extend-attributes`);
+            if (extendResponse.data.code === 200) {
+                setExtendAttrs(extendResponse.data.data);
+            }
+
+            // 获取动态可选项（规格/颜色/服务）
+            const optionsResponse = await axios.get(`${API_BASE_URL}/products/${productId}/options`);
+            if (optionsResponse.data.code === 200) {
+                const o = optionsResponse.data.data || {};
+                setOptions({
+                    specs: Array.isArray(o.specs) ? o.specs : [],
+                    colors: Array.isArray(o.colors) ? o.colors : [],
+                    services: Array.isArray(o.services) ? o.services : []
+                });
+            }
+
+        } catch (error) {
+            console.error('获取商品详情失败:', error);
+            // 如果API返回错误，设置product为null以显示"商品不存在"
+            setProduct(null);
+        } finally {
+            setLoading(false);
+        }
     }, [productId]);
+
+    // 初始加载
+    useEffect(() => {
+        fetchProductDetail();
+    }, [fetchProductDetail]);
+
+    // 使用数据刷新Hook，监听商品数据更新（当管理端修改商品后自动刷新）
+    useDataRefresh(fetchProductDetail, 'products', {
+        pollingInterval: 30000, // 30秒轮询一次，确保商品信息实时更新
+        enableVisibilityRefresh: true
+    });
 
     // 计算当前价格
     const getCurrentPrice = () => {

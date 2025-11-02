@@ -12,6 +12,7 @@ import CartPage from "./pages/CartPage"; // 添加购物车页面导入
 import OrderConfirmPage from "./pages/OrderConfirmPage"; // 添加订单确认页面导入
 import PaymentSuccessPage from "./pages/PaymentSuccessPage"; // 添加支付成功页面导入
 import MyOrdersPage from "./pages/MyOrdersPage"; // 添加我的订单页面导入
+import ProfilePage from "./pages/ProfilePage"; // 添加个人信息页面导入
 import { AuthProvider } from './context/AuthContext';
 import TopNavigation from './components/TopNavigation';
 
@@ -36,6 +37,7 @@ function AppContent() {
         <Route path="/order-confirm" element={<OrderConfirmPage />} />
         <Route path="/payment-success" element={<PaymentSuccessPage />} />
         <Route path="/orders" element={<MyOrdersPage />} />
+        <Route path="/profile" element={<ProfilePage />} />
       </Routes>
       <ModalManager />
     </div>

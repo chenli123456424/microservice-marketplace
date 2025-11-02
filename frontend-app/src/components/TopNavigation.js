@@ -13,7 +13,7 @@ function TopNavigation() {
     const [cartItems, setCartItems] = useState([]);
     const [cartLoading, setCartLoading] = useState(false);
     
-    const { isAuthenticated, logout, token } = useAuth();
+    const { isAuthenticated, logout, token, user } = useAuth();
     const navigate = useNavigate();
 
     const handleLogout = () => {
@@ -108,6 +108,9 @@ function TopNavigation() {
             console.log('TopNavigation: 已移除cartUpdated事件监听器');
         };
     }, []);
+
+    // TopNavigation直接使用Context中的user，当Context更新时会自动重新渲染
+    // 不需要额外的事件监听，React Context机制会自动处理
 
     // 处理搜索框点击
     const handleSearchClick = () => {
@@ -308,6 +311,29 @@ function TopNavigation() {
                     font-size: 20px; /* 字体大小 */
                     color: #333; /* 文字颜色 */
                     position: relative; /* 相对定位 */
+                    display: flex; /* 弹性布局 */
+                    align-items: center; /* 垂直居中 */
+                    gap: 8px; /* 间距 */
+                }
+
+                /* 用户头像样式 */
+                .user-avatar {
+                    width: 32px; /* 宽度 */
+                    height: 32px; /* 高度 */
+                    border-radius: 50%; /* 圆形 */
+                    object-fit: cover; /* 覆盖模式 */
+                    border: 2px solid #fff; /* 白色边框 */
+                }
+
+                /* 用户名样式 */
+                .username-text {
+                    color: #ffffff; /* 白色文字 */
+                    font-size: 14px; /* 字体大小 */
+                    font-weight: normal; /* 正常字重 */
+                    max-width: 100px; /* 最大宽度 */
+                    overflow: hidden; /* 溢出隐藏 */
+                    text-overflow: ellipsis; /* 省略号 */
+                    white-space: nowrap; /* 不换行 */
                 }
                 
                 /* 下拉菜单样式 */
@@ -546,7 +572,21 @@ function TopNavigation() {
                             onMouseLeave={() => setIsUserMenuOpen(false)}
                         >
                             <button className="menu-button">
-                                👤
+                                {user?.avatar ? (
+                                    <img 
+                                        src={`http://localhost:8081${user.avatar}`}
+                                        alt="用户头像"
+                                        className="user-avatar"
+                                        onError={(e) => {
+                                            e.target.style.display = 'none';
+                                            e.target.nextSibling.style.display = 'block';
+                                        }}
+                                    />
+                                ) : null}
+                                {!user?.avatar && <span>👤</span>}
+                                {user?.username && (
+                                    <span className="username-text">{user.username}</span>
+                                )}
                             </button>
                             
                             {isUserMenuOpen && (

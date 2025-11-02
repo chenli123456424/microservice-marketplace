@@ -3,6 +3,7 @@ import {Link, useLocation, useNavigate} from 'react-router-dom';
 import axios from 'axios';
 import FooterSection from '../components/FooterSection';
 import RightSidebar from '../components/RightSidebar';
+import { useDataRefresh } from '../hooks/useDataRefresh';
 
 // 定义API基础URL
 const API_BASE_URL = 'http://localhost:8081/api'; // 根据你的后端服务地址修改
@@ -366,6 +367,13 @@ const ProductFilter = () => {
     useEffect(() => {
         fetchProducts();
     }, [fetchProducts]);
+
+    // 使用数据刷新Hook，监听商品数据更新
+    // 启用轮询和事件通知机制，当管理端修改商品后自动刷新
+    useDataRefresh(fetchProducts, 'products', {
+        pollingInterval: 60000, // 1分钟轮询一次，确保获取最新数据
+        enableVisibilityRefresh: true // 页面从隐藏切换到可见时自动刷新
+    });
 
     // 分页处理函数
     const handlePageChange = (page) => {

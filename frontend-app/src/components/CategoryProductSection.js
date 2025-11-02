@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { useDataRefresh } from '../hooks/useDataRefresh';
 
 // 定义API基础URL
 const API_BASE_URL = 'http://localhost:8081/api';
@@ -11,39 +12,47 @@ const CategoryProductSection = ({ category }) => {
   const [loading, setLoading] = useState(false);
 
   // 获取分类下的商品数据
-  useEffect(() => {
-    const fetchCategoryProducts = async () => {
-      if (!category || !category.mainId) {
-        return;
-      }
+  const fetchCategoryProducts = useCallback(async () => {
+    if (!category || !category.mainId) {
+      return;
+    }
 
-      setLoading(true);
-      try {
-        // 调用后端API获取该分类下的商品
-        const response = await axios.get(`${API_BASE_URL}/products`, {
-          params: {
-            mainId: category.mainId,
-            page: 1,
-            size: 4 // 每个主分类只显示4个商品
-          }
-        });
-        
-        if (response.data.code === 200 && response.data.data) {
-          const productList = response.data.data.records || [];
-          setProducts(productList);
-        } else {
-          setProducts([]);
+    setLoading(true);
+    try {
+      // 调用后端API获取该分类下的商品
+      const response = await axios.get(`${API_BASE_URL}/products`, {
+        params: {
+          mainId: category.mainId,
+          page: 1,
+          size: 4 // 每个主分类只显示4个商品
         }
-      } catch (error) {
-        console.error('获取分类商品失败:', error);
+      });
+      
+      if (response.data.code === 200 && response.data.data) {
+        const productList = response.data.data.records || [];
+        setProducts(productList);
+      } else {
         setProducts([]);
-      } finally {
-        setLoading(false);
       }
-    };
-
-    fetchCategoryProducts();
+    } catch (error) {
+      console.error('获取分类商品失败:', error);
+      setProducts([]);
+    } finally {
+      setLoading(false);
+    }
   }, [category]);
+
+  // 初始加载
+  useEffect(() => {
+    fetchCategoryProducts();
+  }, [fetchCategoryProducts]);
+
+  // 使用数据刷新Hook，监听商品数据更新
+  // 轮询间隔设置为0表示禁用轮询，只使用事件机制
+  useDataRefresh(fetchCategoryProducts, 'products', {
+    pollingInterval: 0, // 禁用轮询，只使用事件通知
+    enableVisibilityRefresh: true
+  });
 
   return (
     <div className="category-product-section">

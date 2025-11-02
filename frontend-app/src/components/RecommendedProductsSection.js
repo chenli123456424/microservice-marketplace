@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { useDataRefresh } from '../hooks/useDataRefresh';
 
 // 定义API基础URL
 const API_BASE_URL = 'http://localhost:8081/api';
@@ -24,26 +25,33 @@ const RecommendedProductsSection = () => {
     ];
     
     // 获取推荐商品数据
-    useEffect(() => {
-        const fetchRecommendedProducts = async () => {
-            setLoading(true);
-            try {
-                const response = await axios.get(`${API_BASE_URL}/recommended-products-with-images`);
-                
-                if (response.data.code === 200 && response.data.data) {
-                    setRecommendedProducts(response.data.data);
-                } else {
-                    console.error('获取推荐商品失败:', response.data.message);
-                }
-            } catch (error) {
-                console.error('获取推荐商品失败:', error);
-            } finally {
-                setLoading(false);
+    const fetchRecommendedProducts = useCallback(async () => {
+        setLoading(true);
+        try {
+            const response = await axios.get(`${API_BASE_URL}/recommended-products-with-images`);
+            
+            if (response.data.code === 200 && response.data.data) {
+                setRecommendedProducts(response.data.data);
+            } else {
+                console.error('获取推荐商品失败:', response.data.message);
             }
-        };
-        
-        fetchRecommendedProducts();
+        } catch (error) {
+            console.error('获取推荐商品失败:', error);
+        } finally {
+            setLoading(false);
+        }
     }, []);
+
+    // 初始加载
+    useEffect(() => {
+        fetchRecommendedProducts();
+    }, [fetchRecommendedProducts]);
+
+    // 使用数据刷新Hook，监听商品数据更新
+    useDataRefresh(fetchRecommendedProducts, 'products', {
+        pollingInterval: 60000, // 1分钟轮询一次
+        enableVisibilityRefresh: true
+    });
 
     return (
         <div className="recommended-products-grid">

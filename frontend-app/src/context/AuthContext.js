@@ -35,13 +35,22 @@ export function AuthProvider({ children }) {
         localStorage.removeItem('undefined');
     };
 
+    //更新用户信息函数：更新state和localStorage中的user
+    const updateUser = (userData) => {
+        setUser(userData);
+        localStorage.setItem('user', JSON.stringify(userData));
+        // 触发全局用户信息更新事件，让所有使用用户信息的组件自动刷新
+        window.dispatchEvent(new CustomEvent('userUpdated', { detail: userData }));
+    };
+
     //定义要通过Context传递的数据
     const value = {
         token,
         user,
         isAuthenticated: !!token,//!!token将token字符串转为布尔值
         login,
-        logout
+        logout,
+        updateUser
     };
 
     //返回Provider，并将value传递给子组件

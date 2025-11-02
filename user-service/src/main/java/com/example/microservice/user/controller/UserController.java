@@ -6,14 +6,19 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.example.microservice.user.dto.*;
 import com.example.microservice.user.entity.User;
 import com.example.microservice.user.service.UserService;
+import com.example.microservice.user.util.JwtUtil;
 import com.example.microservice.user.util.ResponseResult;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * @RestController: 这是一个组合注解，相当于 @Controller + @ResponseBody。
@@ -30,6 +35,9 @@ public class UserController {
     // 注入service层
     @Autowired
     private UserService userService;
+    
+    @Autowired
+    private JwtUtil jwtUtil;
 
     /**
      * @return User: 我们将保存成功后的用户信息（包含数据库生成的ID）返回给客户端。
@@ -277,6 +285,136 @@ public class UserController {
             return ResponseResult.success(userPageResult);
         } catch (Exception e) {
             return ResponseResult.error("查询失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 获取当前登录用户信息
+     * 从JWT token中提取用户名，然后查询用户信息
+     */
+    @GetMapping("/current")
+    public ResponseResult<User> getCurrentUser(@RequestHeader(value = "Authorization", required = false) String authorization) {
+        try {
+            if (authorization == null || !authorization.startsWith("Bearer ")) {
+                return ResponseResult.error("未登录或token无效");
+            }
+            
+            String token = authorization.substring(7);
+            String username = jwtUtil.extractUsername(token);
+            User user = userService.findByUsername(username);
+            
+            if (user == null) {
+                return ResponseResult.error("用户不存在");
+            }
+            
+            // 不返回密码
+            user.setPassword(null);
+            return ResponseResult.success(user);
+        } catch (Exception e) {
+            return ResponseResult.error("获取用户信息失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 更新当前用户信息
+     */
+    @PutMapping("/current")
+    public ResponseResult<User> updateCurrentUser(
+            @RequestHeader(value = "Authorization", required = false) String authorization,
+            @RequestBody Map<String, Object> updateData) {
+        try {
+            if (authorization == null || !authorization.startsWith("Bearer ")) {
+                return ResponseResult.error("未登录或token无效");
+            }
+            
+            String token = authorization.substring(7);
+            String username = jwtUtil.extractUsername(token);
+            User user = userService.findByUsername(username);
+            
+            if (user == null) {
+                return ResponseResult.error("用户不存在");
+            }
+            
+            // 更新允许修改的字段（不包括密码、角色）
+            if (updateData.containsKey("email")) {
+                user.setEmail((String) updateData.get("email"));
+            }
+            if (updateData.containsKey("avatar")) {
+                user.setAvatar((String) updateData.get("avatar"));
+            }
+            
+            boolean updated = userService.updateById(user);
+            if (updated) {
+                User updatedUser = userService.getById(user.getId());
+                updatedUser.setPassword(null);
+                return ResponseResult.success(updatedUser);
+            } else {
+                return ResponseResult.error("更新失败");
+            }
+        } catch (Exception e) {
+            return ResponseResult.error("更新用户信息失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 上传用户头像
+     */
+    @PostMapping("/current/avatar")
+    public ResponseResult<String> uploadAvatar(
+            @RequestHeader(value = "Authorization", required = false) String authorization,
+            @RequestPart("file") MultipartFile file) {
+        try {
+            if (authorization == null || !authorization.startsWith("Bearer ")) {
+                return ResponseResult.error("未登录或token无效");
+            }
+            
+            if (file.isEmpty()) {
+                return ResponseResult.error("文件为空");
+            }
+            
+            // 检查文件类型
+            String contentType = file.getContentType();
+            if (contentType == null || !contentType.startsWith("image/")) {
+                return ResponseResult.error("只支持图片文件");
+            }
+            
+            // 使用项目根目录下的uploads/avatar文件夹
+            String projectRoot = System.getProperty("user.dir");
+            Path uploadDir = Paths.get(projectRoot, "uploads", "avatar");
+            
+            // 确保目录存在
+            if (!Files.exists(uploadDir)) {
+                Files.createDirectories(uploadDir);
+            }
+            
+            // 生成唯一文件名
+            String originalFilename = file.getOriginalFilename();
+            String extension = "";
+            if (originalFilename != null && originalFilename.contains(".")) {
+                extension = originalFilename.substring(originalFilename.lastIndexOf("."));
+            }
+            String filename = "avatar_" + UUID.randomUUID().toString() + extension;
+            
+            // 保存文件
+            Path dest = uploadDir.resolve(filename);
+            file.transferTo(dest.toFile());
+            
+            // 返回可访问的URL
+            String url = "/uploads/avatar/" + filename;
+            
+            // 更新用户的头像URL
+            String token = authorization.substring(7);
+            String username = jwtUtil.extractUsername(token);
+            User user = userService.findByUsername(username);
+            if (user != null) {
+                user.setAvatar(url);
+                userService.updateById(user);
+            }
+            
+            return ResponseResult.success(url);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseResult.error("上传失败: " + e.getMessage());
         }
     }
 }

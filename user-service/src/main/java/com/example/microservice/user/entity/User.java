@@ -25,6 +25,7 @@ public class User implements Serializable {
     private String username;
     private String password;
     private String email;
+    private String avatar; // 用户头像URL
     // 新增角色字段，默认为 USER
     private String role = "USER";
     // 这两个字段由数据库自动维护，通常在Java对象中声明为只读即可
