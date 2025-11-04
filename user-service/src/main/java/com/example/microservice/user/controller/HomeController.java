@@ -304,8 +304,14 @@ public class HomeController {
             }
             
             // 使用项目根目录下的uploads文件夹
+            // 使用与 StaticResourceConfig 一致的路径解析逻辑
             String projectRoot = System.getProperty("user.dir");
-            java.nio.file.Path uploadDir = java.nio.file.Paths.get(projectRoot, "uploads");
+            java.nio.file.Path uploadDir;
+            if (projectRoot.endsWith("user-service")) {
+                uploadDir = java.nio.file.Paths.get(projectRoot, "..", "uploads").toAbsolutePath().normalize();
+            } else {
+                uploadDir = java.nio.file.Paths.get(projectRoot, "uploads").toAbsolutePath();
+            }
             
             // 确保目录存在
             if (!java.nio.file.Files.exists(uploadDir)) {
@@ -335,22 +341,58 @@ public class HomeController {
 
     /**
      * 获取上传的图片
+     * 注意：此方法已被 StaticResourceConfig 替代
+     * StaticResourceConfig 会优先处理静态资源，此方法仅作为备用
+     * 如果遇到路径冲突，可以注释掉此方法，完全依赖 StaticResourceConfig
      */
-    @GetMapping("/uploads/**")
-    @Operation(summary = "获取上传的图片")
+    // @GetMapping("/uploads/**")  // 暂时注释，使用 StaticResourceConfig 处理
+    @Operation(summary = "获取上传的图片（已禁用，使用 StaticResourceConfig）")
     public void getUploadedImage(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        try {
         String requestURI = request.getRequestURI();
-        String filename = requestURI.substring("/uploads/".length());
+            // 提取文件名（可能包含子目录，如 subcategory/xxx.jpg）
+            String filePath = requestURI.substring("/uploads/".length());
         
+            // 使用与 StaticResourceConfig 一致的路径解析逻辑
         String projectRoot = System.getProperty("user.dir");
-        java.nio.file.Path filePath = java.nio.file.Paths.get(projectRoot, "uploads", filename);
+            java.nio.file.Path uploadDir;
+            if (projectRoot.endsWith("user-service")) {
+                uploadDir = java.nio.file.Paths.get(projectRoot, "..", "uploads").toAbsolutePath().normalize();
+            } else {
+                uploadDir = java.nio.file.Paths.get(projectRoot, "uploads").toAbsolutePath();
+            }
+            
+            java.nio.file.Path targetFile = uploadDir.resolve(filePath).normalize();
+            
+            // 安全检查：确保文件在 uploads 目录内
+            if (!targetFile.startsWith(uploadDir)) {
+                response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                return;
+            }
         
-        if (java.nio.file.Files.exists(filePath)) {
-            response.setContentType("image/jpeg");
+            if (java.nio.file.Files.exists(targetFile) && java.nio.file.Files.isRegularFile(targetFile)) {
+                // 根据文件扩展名设置 Content-Type
+                String contentType = "image/jpeg"; // 默认
+                String filename = targetFile.getFileName().toString().toLowerCase();
+                if (filename.endsWith(".png")) {
+                    contentType = "image/png";
+                } else if (filename.endsWith(".gif")) {
+                    contentType = "image/gif";
+                } else if (filename.endsWith(".webp")) {
+                    contentType = "image/webp";
+                } else if (filename.endsWith(".jpg") || filename.endsWith(".jpeg")) {
+                    contentType = "image/jpeg";
+                }
+                
+                response.setContentType(contentType);
             response.setHeader("Cache-Control", "public, max-age=3600");
-            java.nio.file.Files.copy(filePath, response.getOutputStream());
+                java.nio.file.Files.copy(targetFile, response.getOutputStream());
         } else {
             response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         }
     }
 

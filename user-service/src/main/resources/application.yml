@@ -1,5 +1,10 @@
 server:
   port: 8081
+  tomcat:
+    # 增加HTTP请求头大小限制（单位：字节，50MB = 52428800字节）
+    max-http-header-size: 52428800
+    # 增加HTTP POST请求大小限制
+    max-http-post-size: 52428800
 
 spring:
   application:
@@ -31,9 +36,15 @@ spring:
     allow-circular-references: true
   servlet:
     multipart:
-      max-file-size: 10MB
-      max-request-size: 10MB
+      max-file-size: 50MB
+      max-request-size: 50MB
       enabled: true
+  # 增加HTTP请求体和响应体大小限制
+  http:
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
 
 mybatis-plus:
     mapper-locations: classpath*:mapper/*.xml

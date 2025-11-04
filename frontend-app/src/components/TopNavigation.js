@@ -957,7 +957,7 @@ function TopNavigation() {
                         {isNotificationMenuOpen && (
                             <div className="notification-dropdown">
                                 <div className="notification-header">
-                                    公告通知 ({announcementCount})
+                                    通知中心 ({announcementCount})
                                 </div>
                                 <div className="notification-items">
                                     {announcements.length > 0 ? (

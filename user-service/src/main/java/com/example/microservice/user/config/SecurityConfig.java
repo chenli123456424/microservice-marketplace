@@ -95,7 +95,13 @@ public class SecurityConfig {
                                 "/api/cart/**",
                                 "/api/orders/**",
                                 "/api/admin/category/**",
-                                "/api/announcement/**"
+                                "/api/announcement/**",
+                                "/api/custom-cases/**",
+                                "/api/designers/**",
+                                "/api/custom-plans/**",
+                                "/api/appointments/**",
+                                "/api/stores/**",
+                                "/uploads/**"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
