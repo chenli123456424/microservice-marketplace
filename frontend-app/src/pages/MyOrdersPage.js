@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 import { modalService } from '../components/ModalManager';
+import { showModal } from '../utils/modal';
 import FooterSection from '../components/FooterSection';
 import './MyOrdersPage.css';
 
@@ -21,6 +22,20 @@ const MyOrdersPage = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [pageSize, setPageSize] = useState(10);
     const [totalPages, setTotalPages] = useState(0);
+    
+    // 评价相关状态
+    const [reviewModalVisible, setReviewModalVisible] = useState(false);
+    const [reviewingOrder, setReviewingOrder] = useState(null);
+    const [reviewFormData, setReviewFormData] = useState({
+        orderItemId: null,
+        productId: null,
+        rating: 5,
+        content: '',
+        images: []
+    });
+    const [reviewImageFiles, setReviewImageFiles] = useState([]);
+    const [reviewImagePreviews, setReviewImagePreviews] = useState([]);
+    const [reviewLoading, setReviewLoading] = useState(false);
 
     // 订单状态映射
     const orderStatusMap = {
@@ -28,7 +43,8 @@ const MyOrdersPage = () => {
         2: { text: '待发货', color: '#1890ff', bgColor: '#e6f7ff' },
         3: { text: '待收货', color: '#13c2c2', bgColor: '#e6fffb' },
         4: { text: '待评价', color: '#722ed1', bgColor: '#f9f0ff' },
-        5: { text: '退款/售后', color: '#ff4d4f', bgColor: '#fff1f0' }
+        5: { text: '已完成', color: '#52c41a', bgColor: '#f6ffed' },
+        6: { text: '退款/售后', color: '#ff4d4f', bgColor: '#fff1f0' }
     };
 
     // 支付状态映射
@@ -124,11 +140,12 @@ const MyOrdersPage = () => {
             case 'pending_receipt':
                 return orders.filter(order => order.orderStatus === 3);
             case 'completed':
-                return orders.filter(order => order.orderStatus === 4);
+                return orders.filter(order => order.orderStatus === 4); // 待评价
             case 'cancelled':
-                return orders.filter(order => order.orderStatus === 5);
+                return orders.filter(order => order.orderStatus === 6); // 退款/售后
             default:
-                return orders;
+                // 全部有效订单：排除退款/售后（状态6）
+                return orders.filter(order => order.orderStatus !== 6);
         }
     };
 
@@ -342,6 +359,247 @@ const MyOrdersPage = () => {
         );
     };
 
+    // 打开评价弹窗
+    const handleOpenReviewModal = (order) => {
+        setReviewingOrder(order);
+        // 如果订单只有一个商品，默认选择该商品
+        if (order.orderItems && order.orderItems.length === 1) {
+            const item = order.orderItems[0];
+            setReviewFormData({
+                orderItemId: item.itemId,
+                productId: item.productId,
+                rating: 5,
+                content: '',
+                images: []
+            });
+        } else {
+            setReviewFormData({
+                orderItemId: null,
+                productId: null,
+                rating: 5,
+                content: '',
+                images: []
+            });
+        }
+        setReviewImageFiles([]);
+        setReviewImagePreviews([]);
+        setReviewModalVisible(true);
+    };
+
+    // 关闭评价弹窗
+    const handleCloseReviewModal = () => {
+        setReviewModalVisible(false);
+        setReviewingOrder(null);
+        setReviewFormData({
+            orderItemId: null,
+            productId: null,
+            rating: 5,
+            content: '',
+            images: []
+        });
+        setReviewImageFiles([]);
+        setReviewImagePreviews([]);
+    };
+
+    // 选择评价图片
+    const handleReviewImageSelect = (e) => {
+        const files = Array.from(e.target.files);
+        if (reviewImageFiles.length + files.length > 9) {
+            showModal.error('最多只能上传9张图片');
+            return;
+        }
+        
+        const newFiles = [...reviewImageFiles, ...files];
+        setReviewImageFiles(newFiles);
+        
+        const newPreviews = files.map(file => URL.createObjectURL(file));
+        setReviewImagePreviews([...reviewImagePreviews, ...newPreviews]);
+    };
+
+    // 删除评价图片
+    const handleReviewRemoveImage = (index) => {
+        const newFiles = reviewImageFiles.filter((_, i) => i !== index);
+        const newPreviews = reviewImagePreviews.filter((_, i) => i !== index);
+        
+        // 释放URL对象
+        URL.revokeObjectURL(reviewImagePreviews[index]);
+        
+        setReviewImageFiles(newFiles);
+        setReviewImagePreviews(newPreviews);
+    };
+
+    // 上传评价图片
+    const uploadReviewImages = async () => {
+        if (reviewImageFiles.length === 0) {
+            return [];
+        }
+
+        const uploadedUrls = [];
+        for (const file of reviewImageFiles) {
+            try {
+                const formData = new FormData();
+                formData.append('file', file);
+
+                const response = await axios.post(
+                    'http://localhost:8081/api/home/upload-image',
+                    formData,
+                    {
+                        headers: {
+                            'Content-Type': 'multipart/form-data',
+                            'Authorization': token ? `Bearer ${token}` : '' // 添加token
+                        }
+                    }
+                );
+
+                if (response.data.code === 200 && response.data.data) {
+                    uploadedUrls.push(response.data.data);
+                } else {
+                    console.error('上传图片失败:', response.data.message);
+                }
+            } catch (error) {
+                console.error('上传图片失败:', error);
+                throw error; // 抛出错误，让上层处理
+            }
+        }
+        return uploadedUrls;
+    };
+
+    // 提交评价
+    const handleSubmitReview = async () => {
+        if (!reviewFormData.productId) {
+            showModal.error('请选择要评价的商品');
+            return;
+        }
+        
+        if (!reviewFormData.content || reviewFormData.content.trim() === '') {
+            showModal.error('请输入评价内容');
+            return;
+        }
+
+        try {
+            setReviewLoading(true);
+            
+            // 上传图片（如果上传失败，继续提交评价，但不包含图片）
+            let imageUrls = [];
+            try {
+                imageUrls = await uploadReviewImages();
+            } catch (error) {
+                console.error('上传图片失败，继续提交评价:', error);
+                // 如果图片上传失败，可以选择继续提交评价或取消
+                const shouldContinue = window.confirm('图片上传失败，是否继续提交评价（不包含图片）？');
+                if (!shouldContinue) {
+                    setReviewLoading(false);
+                    return;
+                }
+            }
+            
+            // 构建评价数据
+            const reviewData = {
+                orderId: reviewingOrder.orderId,
+                productId: reviewFormData.productId,
+                rating: reviewFormData.rating || 5,
+                content: reviewFormData.content.trim()
+            };
+            
+            // 只有当orderItemId存在时才添加
+            if (reviewFormData.orderItemId) {
+                reviewData.orderItemId = reviewFormData.orderItemId;
+            }
+            
+            // 只有当有图片时才添加images字段
+            if (imageUrls.length > 0) {
+                reviewData.images = imageUrls.join(',');
+            }
+
+            const response = await axios.post(
+                'http://localhost:8081/api/order-reviews',
+                reviewData,
+                {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                }
+            );
+
+            if (response.data.code === 200) {
+                showModal.success('评价成功！');
+                handleCloseReviewModal();
+                // 评价成功后，订单状态会变为"已完成"（状态5），从"待评价"列表消失
+                // 如果当前在"待评价"标签页，自动切换到"全部有效订单"
+                if (activeTab === 'completed') {
+                    setActiveTab('all');
+                    fetchOrders('all');
+                } else {
+                    // 刷新订单列表
+                    fetchOrders(activeTab);
+                }
+            } else {
+                showModal.error(response.data.message || '评价失败');
+            }
+        } catch (error) {
+            console.error('提交评价失败:', error);
+            const errorMessage = error.response?.data?.message || error.message || '评价失败，请稍后重试';
+            showModal.error(errorMessage);
+        } finally {
+            setReviewLoading(false);
+        }
+    };
+
+    // 再次购买 - 将订单商品添加到购物车
+    const handleBuyAgain = async (order) => {
+        if (!order.orderItems || order.orderItems.length === 0) {
+            showModal.error('订单中没有商品');
+            return;
+        }
+
+        try {
+            let successCount = 0;
+            let failCount = 0;
+
+            // 遍历订单中的所有商品，添加到购物车
+            for (const item of order.orderItems) {
+                try {
+                    const response = await axios.post(
+                        'http://localhost:8081/api/cart/items',
+                        {
+                            productId: item.productId,
+                            quantity: item.quantity,
+                            spec: item.spec || null,
+                            color: item.color || null
+                        },
+                        {
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'application/json'
+                            }
+                        }
+                    );
+
+                    if (response.data.code === 200) {
+                        successCount++;
+                    } else {
+                        failCount++;
+                    }
+                } catch (error) {
+                    console.error('添加商品到购物车失败:', item.productName, error);
+                    failCount++;
+                }
+            }
+
+            if (successCount > 0) {
+                showModal.success(`已成功添加 ${successCount} 个商品到购物车${failCount > 0 ? `，${failCount} 个商品添加失败` : ''}`);
+                // 触发购物车更新事件
+                window.dispatchEvent(new CustomEvent('cartUpdated'));
+            } else {
+                showModal.error('添加失败，请稍后重试');
+            }
+        } catch (error) {
+            console.error('再次购买失败:', error);
+            showModal.error('操作失败，请稍后重试');
+        }
+    };
+
     // 获取订单操作按钮
     const getOrderActions = (order) => {
         const actions = [];
@@ -391,17 +649,40 @@ const MyOrdersPage = () => {
                 break;
             case 4: // 待评价
                 actions.push(
-                    <button key="review" className="order-action-btn secondary-btn">
+                    <button 
+                        key="review" 
+                        className="order-action-btn secondary-btn"
+                        onClick={() => handleOpenReviewModal(order)}
+                    >
                         评价晒单
                     </button>,
-                    <button key="rebuy" className="order-action-btn primary-btn">
+                    <button 
+                        key="rebuy" 
+                        className="order-action-btn primary-btn"
+                        onClick={() => handleBuyAgain(order)}
+                    >
                         再次购买
                     </button>
                 );
                 break;
-            case 5: // 退款/售后
+            case 5: // 已完成
                 actions.push(
-                    <button key="rebuy" className="order-action-btn primary-btn">
+                    <button 
+                        key="rebuy" 
+                        className="order-action-btn primary-btn"
+                        onClick={() => handleBuyAgain(order)}
+                    >
+                        再次购买
+                    </button>
+                );
+                break;
+            case 6: // 退款/售后
+                actions.push(
+                    <button 
+                        key="rebuy" 
+                        className="order-action-btn primary-btn"
+                        onClick={() => handleBuyAgain(order)}
+                    >
                         再次购买
                     </button>,
                     <button key="contact" className="order-action-btn secondary-btn">
@@ -539,11 +820,11 @@ const MyOrdersPage = () => {
                                         <span 
                                             className="status-badge"
                                             style={{
-                                                color: orderStatusMap[order.orderStatus]?.color,
-                                                backgroundColor: orderStatusMap[order.orderStatus]?.bgColor
+                                                color: orderStatusMap[order.orderStatus]?.color || '#666',
+                                                backgroundColor: orderStatusMap[order.orderStatus]?.bgColor || '#f5f5f5'
                                             }}
                                         >
-                                            {orderStatusMap[order.orderStatus]?.text}
+                                            {orderStatusMap[order.orderStatus]?.text || `状态${order.orderStatus}`}
                                         </span>
                                     </div>
                                 </div>
@@ -711,6 +992,256 @@ const MyOrdersPage = () => {
                     </>
                 )}
             </div>
+            
+            {/* 评价晒单弹窗 */}
+            {reviewModalVisible && reviewingOrder && (
+                <div
+                    style={{
+                        position: 'fixed',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        zIndex: 1000
+                    }}
+                    onClick={(e) => {
+                        if (e.target === e.currentTarget) {
+                            handleCloseReviewModal();
+                        }
+                    }}
+                >
+                    <div
+                        style={{
+                            backgroundColor: '#fff',
+                            borderRadius: 12,
+                            padding: 24,
+                            width: '90%',
+                            maxWidth: 600,
+                            maxHeight: '90vh',
+                            overflowY: 'auto',
+                            boxShadow: '0 4px 20px rgba(0,0,0,0.15)'
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+                            <h2 style={{ margin: 0, fontSize: 20, fontWeight: 'bold' }}>评价晒单</h2>
+                            <button
+                                onClick={handleCloseReviewModal}
+                                style={{
+                                    background: 'none',
+                                    border: 'none',
+                                    fontSize: 24,
+                                    cursor: 'pointer',
+                                    color: '#999'
+                                }}
+                            >
+                                ×
+                            </button>
+                        </div>
+
+                        {/* 选择商品（如果订单有多个商品） */}
+                        {reviewingOrder.orderItems && reviewingOrder.orderItems.length > 1 && (
+                            <div style={{ marginBottom: 20 }}>
+                                <label style={{ display: 'block', marginBottom: 8, fontSize: 14, fontWeight: 500 }}>
+                                    选择要评价的商品：
+                                </label>
+                                <select
+                                    value={reviewFormData.orderItemId || ''}
+                                    onChange={(e) => {
+                                        const itemId = e.target.value ? Number(e.target.value) : null;
+                                        const selectedItem = reviewingOrder.orderItems.find(item => item.itemId === itemId);
+                                        setReviewFormData({
+                                            ...reviewFormData,
+                                            orderItemId: itemId,
+                                            productId: selectedItem ? selectedItem.productId : null
+                                        });
+                                    }}
+                                    style={{
+                                        width: '100%',
+                                        padding: '8px 12px',
+                                        border: '1px solid #ddd',
+                                        borderRadius: 4,
+                                        fontSize: 14
+                                    }}
+                                >
+                                    <option value="">请选择商品</option>
+                                    {reviewingOrder.orderItems.map(item => (
+                                        <option key={item.itemId} value={item.itemId}>
+                                            {item.productName} {item.spec ? `- ${item.spec}` : ''} {item.color ? `- ${item.color}` : ''}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                        )}
+
+                        {/* 评分 */}
+                        <div style={{ marginBottom: 20 }}>
+                            <label style={{ display: 'block', marginBottom: 8, fontSize: 14, fontWeight: 500 }}>
+                                评分：
+                            </label>
+                            <div style={{ display: 'flex', gap: 8 }}>
+                                {[1, 2, 3, 4, 5].map(rating => (
+                                    <button
+                                        key={rating}
+                                        onClick={() => setReviewFormData({ ...reviewFormData, rating })}
+                                        style={{
+                                            fontSize: 32,
+                                            background: 'none',
+                                            border: 'none',
+                                            cursor: 'pointer',
+                                            padding: 0,
+                                            color: rating <= reviewFormData.rating ? '#ff6b35' : '#ddd',
+                                            transition: 'color 0.2s'
+                                        }}
+                                    >
+                                        {rating <= reviewFormData.rating ? '★' : '☆'}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* 评价内容 */}
+                        <div style={{ marginBottom: 20 }}>
+                            <label style={{ display: 'block', marginBottom: 8, fontSize: 14, fontWeight: 500 }}>
+                                评价内容 <span style={{ color: '#ff4d4f' }}>*</span>：
+                            </label>
+                            <textarea
+                                value={reviewFormData.content}
+                                onChange={(e) => setReviewFormData({ ...reviewFormData, content: e.target.value })}
+                                placeholder="请输入您的评价..."
+                                rows={5}
+                                style={{
+                                    width: '100%',
+                                    padding: '12px',
+                                    border: '1px solid #ddd',
+                                    borderRadius: 4,
+                                    fontSize: 14,
+                                    resize: 'vertical',
+                                    fontFamily: 'inherit'
+                                }}
+                            />
+                        </div>
+
+                        {/* 上传图片 */}
+                        <div style={{ marginBottom: 20 }}>
+                            <label style={{ display: 'block', marginBottom: 8, fontSize: 14, fontWeight: 500 }}>
+                                晒单图片（最多9张）：
+                            </label>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 8 }}>
+                                {reviewImagePreviews.map((preview, index) => (
+                                    <div key={index} style={{ position: 'relative', width: 100, height: 100 }}>
+                                        <img
+                                            src={preview}
+                                            alt={`预览 ${index + 1}`}
+                                            style={{
+                                                width: '100%',
+                                                height: '100%',
+                                                objectFit: 'cover',
+                                                borderRadius: 4,
+                                                border: '1px solid #ddd'
+                                            }}
+                                        />
+                                        <button
+                                            onClick={() => handleReviewRemoveImage(index)}
+                                            style={{
+                                                position: 'absolute',
+                                                top: -8,
+                                                right: -8,
+                                                width: 24,
+                                                height: 24,
+                                                borderRadius: '50%',
+                                                background: '#ff4d4f',
+                                                color: '#fff',
+                                                border: 'none',
+                                                cursor: 'pointer',
+                                                fontSize: 16,
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center'
+                                            }}
+                                        >
+                                            ×
+                                        </button>
+                                    </div>
+                                ))}
+                                {reviewImagePreviews.length < 9 && (
+                                    <label
+                                        style={{
+                                            width: 100,
+                                            height: 100,
+                                            border: '2px dashed #ddd',
+                                            borderRadius: 4,
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            cursor: 'pointer',
+                                            backgroundColor: '#fafafa',
+                                            transition: 'all 0.2s'
+                                        }}
+                                        onMouseEnter={(e) => {
+                                            e.currentTarget.style.borderColor = '#ff6b35';
+                                            e.currentTarget.style.backgroundColor = '#fff5f0';
+                                        }}
+                                        onMouseLeave={(e) => {
+                                            e.currentTarget.style.borderColor = '#ddd';
+                                            e.currentTarget.style.backgroundColor = '#fafafa';
+                                        }}
+                                    >
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            multiple
+                                            onChange={handleReviewImageSelect}
+                                            style={{ display: 'none' }}
+                                        />
+                                        <span style={{ fontSize: 24, color: '#999' }}>+</span>
+                                    </label>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* 操作按钮 */}
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
+                            <button
+                                onClick={handleCloseReviewModal}
+                                disabled={reviewLoading}
+                                style={{
+                                    padding: '10px 20px',
+                                    border: '1px solid #ddd',
+                                    borderRadius: 4,
+                                    background: '#fff',
+                                    color: '#666',
+                                    cursor: 'pointer',
+                                    fontSize: 14
+                                }}
+                            >
+                                取消
+                            </button>
+                            <button
+                                onClick={handleSubmitReview}
+                                disabled={reviewLoading}
+                                style={{
+                                    padding: '10px 20px',
+                                    border: 'none',
+                                    borderRadius: 4,
+                                    background: reviewLoading ? '#ccc' : '#ff6b35',
+                                    color: '#fff',
+                                    cursor: reviewLoading ? 'not-allowed' : 'pointer',
+                                    fontSize: 14,
+                                    fontWeight: 500
+                                }}
+                            >
+                                {reviewLoading ? '提交中...' : '提交评价'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+            
             <FooterSection />
         </div>
     );

@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 import { calculateUnreadCount, markAnnouncementAsRead } from '../utils/notificationHelper';
+import { showModal } from '../utils/modal';
 
 function TopNavigation() {
     const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
@@ -20,11 +21,24 @@ function TopNavigation() {
     
     const { isAuthenticated, logout, token, user, updateUser } = useAuth();
     const navigate = useNavigate();
+    const location = useLocation();
 
     const handleLogout = () => {
-        logout();
-        setIsUserMenuOpen(false);
-        navigate('/');
+        // 显示确认退出弹窗
+        showModal.confirm(
+            '确定要退出登录吗？',
+            '退出登录',
+            () => {
+                // 确认后执行退出操作
+                logout();
+                setIsUserMenuOpen(false);
+                navigate('/');
+            },
+            () => {
+                // 取消操作，不做任何处理
+                setIsUserMenuOpen(false);
+            }
+        );
     };
 
     // 获取分类数据
@@ -431,12 +445,28 @@ function TopNavigation() {
                     font-weight: normal; /* 正常字重 */
                     font-size: 16px; /* 字体大小 */
                     line-height: 1.5; /* 行高 */
-                    transition: color 0.3s ease; /* 颜色过渡效果 */
+                    padding: 8px 16px; /* 内边距，为填充底色提供空间 */
+                    border-radius: 4px; /* 圆角 */
+                    transition: all 0.3s ease; /* 所有属性过渡效果 */
+                    display: inline-block; /* 内联块，使padding生效 */
                 }
                 
-                /* 导航链接悬停效果 */
+                /* 导航链接悬停效果（预选中） */
                 .dh-nav-link:hover {
-                    color: #e68b40; /* 悬停时文字颜色改为橙色 */
+                    background-color: rgba(255, 255, 255, 0.2); /* 半透明白色背景 */
+                    color: #ffffff; /* 保持白色文字 */
+                }
+                
+                /* 导航链接选中效果（填充底色） */
+                .dh-nav-link.active {
+                    background-color: rgba(255, 255, 255, 0.3); /* 更明显的白色背景 */
+                    color: #ffffff; /* 保持白色文字 */
+                    font-weight: 500; /* 稍微加粗 */
+                }
+                
+                /* 选中状态下的悬停效果 */
+                .dh-nav-link.active:hover {
+                    background-color: rgba(255, 255, 255, 0.4); /* 悬停时背景更明显 */
                 }
                 
                 /* 右侧功能区域容器 */
@@ -768,19 +798,34 @@ function TopNavigation() {
                     </div>
 
                     {/* 其他导航项 */}
-                    <Link to="/custom" className="dh-nav-link">
+                    <Link 
+                        to="/custom" 
+                        className={`dh-nav-link ${location.pathname === '/custom' || location.pathname.startsWith('/custom') ? 'active' : ''}`}
+                    >
                         全屋定制
                     </Link>
-                    <Link to="/designers" className="dh-nav-link">
+                    <Link 
+                        to="/designers" 
+                        className={`dh-nav-link ${location.pathname === '/designers' || location.pathname.startsWith('/designer') ? 'active' : ''}`}
+                    >
                         设计师
                     </Link>
-                    <Link to="/stores" className="dh-nav-link">
+                    <Link 
+                        to="/stores" 
+                        className={`dh-nav-link ${location.pathname === '/stores' || location.pathname.startsWith('/stores') ? 'active' : ''}`}
+                    >
                         线下门店
                     </Link>
-                    <Link to="/service" className="dh-nav-link">
+                    <Link 
+                        to="/service" 
+                        className={`dh-nav-link ${location.pathname === '/service' || location.pathname.startsWith('/service') ? 'active' : ''}`}
+                    >
                         服务中心
                     </Link>
-                    <Link to="/community" className="dh-nav-link">
+                    <Link 
+                        to="/community" 
+                        className={`dh-nav-link ${location.pathname === '/community' || location.pathname.startsWith('/community') || location.pathname.startsWith('/post') || location.pathname.startsWith('/publish-post') ? 'active' : ''}`}
+                    >
                         社区/灵感
                     </Link>
                 </nav>
@@ -878,9 +923,12 @@ function TopNavigation() {
                                         个人信息
                                     </Link>
                                     <Link
-                                        onClick={handleLogout}
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            handleLogout();
+                                        }}
                                         className="dropdown-link">
-                                        登出
+                                        退出登录
                                     </Link>
                                 </div>
                             )}

@@ -201,10 +201,10 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
                 }
             }
             
-            // 4. 更新订单状态为已取消
+            // 4. 更新订单状态为退款/售后（状态6）
             Order order = new Order();
             order.setOrderId(orderId);
-            order.setOrderStatus(5); // 已取消
+            order.setOrderStatus(6); // 退款/售后
             if (reason != null && !reason.isEmpty()) {
                 order.setRemark(existingOrder.getRemark() != null ? 
                     existingOrder.getRemark() + " | 取消原因: " + reason : 

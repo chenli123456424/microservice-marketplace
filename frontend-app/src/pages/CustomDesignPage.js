@@ -1073,7 +1073,16 @@ const CustomDesignPage = () => {
                                             onMouseEnter={(e) => e.target.style.backgroundColor = '#5568d3'}
                                             onMouseLeave={(e) => e.target.style.backgroundColor = '#667eea'}
                                             onClick={() => {
+                                                // 设置选中的设计师ID
+                                                setFormData(prev => ({
+                                                    ...prev,
+                                                    designerId: designer.id.toString()
+                                                }));
+                                                // 更新URL参数，包含tab和designerId
+                                                navigate(`/custom?tab=appointment&designerId=${designer.id}`, { replace: true });
+                                                // 切换到预约标签页
                                                 setActiveTab('appointment');
+                                                // 滚动到顶部
                                                 window.scrollTo({ top: 0, behavior: 'smooth' });
                                             }}
                                             >

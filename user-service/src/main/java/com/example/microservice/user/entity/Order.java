@@ -78,12 +78,14 @@ public class Order {
     private String username;
     
     // 订单状态枚举
+    // 1-待付款，2-待发货（已付款），3-待收货（已发货），4-待评价（已收货），5-已完成（已评价），6-退款/售后
     public enum OrderStatus {
         PENDING_PAYMENT(1, "待付款"),
-        PAID(2, "已付款"),
-        SHIPPED(3, "已发货"),
-        COMPLETED(4, "已完成"),
-        CANCELLED(5, "已取消");
+        PAID(2, "待发货"),
+        SHIPPED(3, "待收货"),
+        PENDING_REVIEW(4, "待评价"),
+        COMPLETED(5, "已完成"),
+        REFUND(6, "退款/售后");
         
         private final int code;
         private final String desc;

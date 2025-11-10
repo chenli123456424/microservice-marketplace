@@ -287,6 +287,15 @@ public class HomeController {
     }
 
     /**
+     * 上传图片文件，返回可访问URL（公共接口，用于评价晒单等）
+     */
+    @PostMapping("/home/upload-image")
+    @Operation(summary = "上传图片文件（公共接口）")
+    public ResponseResult<String> uploadImagePublic(@RequestPart("file") MultipartFile file) {
+        return uploadImage(file);
+    }
+    
+    /**
      * 上传图片文件，返回可访问URL
      */
     @PostMapping("/admin/upload")

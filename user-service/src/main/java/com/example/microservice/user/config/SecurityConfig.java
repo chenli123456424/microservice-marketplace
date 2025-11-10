@@ -113,11 +113,15 @@ public class SecurityConfig {
                                 "/api/community-posts/*/like-status",
                                 "/api/community-comments/page",
                                 "/api/community-comments/list",
+                                "/api/order-reviews/order/**",
+                                "/api/order-reviews/product/**",
+                                "/api/home/upload-image",
                                 "/uploads/**"
                         ).permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/community-posts/my-posts").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/community-posts/*/like").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/custom-cases/*/like").authenticated()
+                        .requestMatchers("/api/order-reviews/**").authenticated()
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
