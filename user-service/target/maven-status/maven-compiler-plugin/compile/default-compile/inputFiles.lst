@@ -3,7 +3,9 @@ D:\Raunjian Rujing\intellij IDEA\workplace\microservice-marketplace\user-service
 D:\Raunjian Rujing\intellij IDEA\workplace\microservice-marketplace\user-service\src\main\java\com\example\microservice\user\entity\Product.java
 D:\Raunjian Rujing\intellij IDEA\workplace\microservice-marketplace\user-service\src\main\java\com\example\microservice\user\service\FilterDimensionService.java
 D:\Raunjian Rujing\intellij IDEA\workplace\microservice-marketplace\user-service\src\main\java\com\example\microservice\user\service\CartService.java
+D:\Raunjian Rujing\intellij IDEA\workplace\microservice-marketplace\user-service\src\main\java\com\example\microservice\user\service\CommunityCommentService.java
 D:\Raunjian Rujing\intellij IDEA\workplace\microservice-marketplace\user-service\src\main\java\com\example\microservice\user\dto\ResetPasswordRequest.java
+D:\Raunjian Rujing\intellij IDEA\workplace\microservice-marketplace\user-service\src\main\java\com\example\microservice\user\mapper\CommunityCommentMapper.java
 D:\Raunjian Rujing\intellij IDEA\workplace\microservice-marketplace\user-service\src\main\java\com\example\microservice\user\mapper\ProductImageMapper.java
 D:\Raunjian Rujing\intellij IDEA\workplace\microservice-marketplace\user-service\src\main\java\com\example\microservice\user\config\SwaggerConfig.java
 D:\Raunjian Rujing\intellij IDEA\workplace\microservice-marketplace\user-service\src\main\java\com\example\microservice\user\entity\ProductCommonAttr.java
@@ -13,10 +15,13 @@ D:\Raunjian Rujing\intellij IDEA\workplace\microservice-marketplace\user-service
 D:\Raunjian Rujing\intellij IDEA\workplace\microservice-marketplace\user-service\src\main\java\com\example\microservice\user\dto\CreateOrderRequest.java
 D:\Raunjian Rujing\intellij IDEA\workplace\microservice-marketplace\user-service\src\main\java\com\example\microservice\user\mapper\AppointmentMapper.java
 D:\Raunjian Rujing\intellij IDEA\workplace\microservice-marketplace\user-service\src\main\java\com\example\microservice\user\dto\CreateOrderResponse.java
+D:\Raunjian Rujing\intellij IDEA\workplace\microservice-marketplace\user-service\src\main\java\com\example\microservice\user\mapper\CaseCommentMapper.java
 D:\Raunjian Rujing\intellij IDEA\workplace\microservice-marketplace\user-service\src\main\java\com\example\microservice\user\service\impl\ProductServiceImpl.java
 D:\Raunjian Rujing\intellij IDEA\workplace\microservice-marketplace\user-service\src\main\java\com\example\microservice\user\entity\Announcement.java
 D:\Raunjian Rujing\intellij IDEA\workplace\microservice-marketplace\user-service\src\main\java\com\example\microservice\user\dto\VerifyResetCodeRequest.java
 D:\Raunjian Rujing\intellij IDEA\workplace\microservice-marketplace\user-service\src\main\java\com\example\microservice\user\mapper\FilterDimensionMapper.java
+D:\Raunjian Rujing\intellij IDEA\workplace\microservice-marketplace\user-service\src\main\java\com\example\microservice\user\controller\LogisticsController.java
+D:\Raunjian Rujing\intellij IDEA\workplace\microservice-marketplace\user-service\src\main\java\com\example\microservice\user\service\impl\CaseCommentServiceImpl.java
 D:\Raunjian Rujing\intellij IDEA\workplace\microservice-marketplace\user-service\src\main\java\com\example\microservice\user\service\impl\BrandServiceImpl.java
 D:\Raunjian Rujing\intellij IDEA\workplace\microservice-marketplace\user-service\src\main\java\com\example\microservice\user\controller\CategoryManagementController.java
 D:\Raunjian Rujing\intellij IDEA\workplace\microservice-marketplace\user-service\src\main\java\com\example\microservice\user\dto\ProductSaveRequest.java
@@ -27,6 +32,7 @@ D:\Raunjian Rujing\intellij IDEA\workplace\microservice-marketplace\user-service
 D:\Raunjian Rujing\intellij IDEA\workplace\microservice-marketplace\user-service\src\main\java\com\example\microservice\user\controller\DesignerController.java
 D:\Raunjian Rujing\intellij IDEA\workplace\microservice-marketplace\user-service\src\main\java\com\example\microservice\user\mapper\OrderItemMapper.java
 D:\Raunjian Rujing\intellij IDEA\workplace\microservice-marketplace\user-service\src\main\java\com\example\microservice\user\service\BrandService.java
+D:\Raunjian Rujing\intellij IDEA\workplace\microservice-marketplace\user-service\src\main\java\com\example\microservice\user\service\impl\CommunityPostServiceImpl.java
 D:\Raunjian Rujing\intellij IDEA\workplace\microservice-marketplace\user-service\src\main\java\com\example\microservice\user\controller\CustomCaseController.java
 D:\Raunjian Rujing\intellij IDEA\workplace\microservice-marketplace\user-service\src\main\java\com\example\microservice\user\service\impl\UserServiceImpl.java
 D:\Raunjian Rujing\intellij IDEA\workplace\microservice-marketplace\user-service\src\main\java\com\example\microservice\user\controller\CartController.java
@@ -38,6 +44,7 @@ D:\Raunjian Rujing\intellij IDEA\workplace\microservice-marketplace\user-service
 D:\Raunjian Rujing\intellij IDEA\workplace\microservice-marketplace\user-service\src\main\java\com\example\microservice\user\controller\HomeController.java
 D:\Raunjian Rujing\intellij IDEA\workplace\microservice-marketplace\user-service\src\main\java\com\example\microservice\user\service\impl\MainCategoryServiceImpl.java
 D:\Raunjian Rujing\intellij IDEA\workplace\microservice-marketplace\user-service\src\main\java\com\example\microservice\user\entity\Brand.java
+D:\Raunjian Rujing\intellij IDEA\workplace\microservice-marketplace\user-service\src\main\java\com\example\microservice\user\mapper\CommunityPostMapper.java
 D:\Raunjian Rujing\intellij IDEA\workplace\microservice-marketplace\user-service\src\main\java\com\example\microservice\user\config\RedisConfig.java
 D:\Raunjian Rujing\intellij IDEA\workplace\microservice-marketplace\user-service\src\main\java\com\example\microservice\user\mapper\CustomCaseMapper.java
 D:\Raunjian Rujing\intellij IDEA\workplace\microservice-marketplace\user-service\src\main\java\com\example\microservice\user\entity\FilterDimension.java
@@ -49,7 +56,9 @@ D:\Raunjian Rujing\intellij IDEA\workplace\microservice-marketplace\user-service
 D:\Raunjian Rujing\intellij IDEA\workplace\microservice-marketplace\user-service\src\main\java\com\example\microservice\user\dto\SendCodeRequest.java
 D:\Raunjian Rujing\intellij IDEA\workplace\microservice-marketplace\user-service\src\main\java\com\example\microservice\user\config\CustomUserDetailsService.java
 D:\Raunjian Rujing\intellij IDEA\workplace\microservice-marketplace\user-service\src\main\java\com\example\microservice\user\mapper\StoreMapper.java
+D:\Raunjian Rujing\intellij IDEA\workplace\microservice-marketplace\user-service\src\main\java\com\example\microservice\user\service\impl\CommunityCommentServiceImpl.java
 D:\Raunjian Rujing\intellij IDEA\workplace\microservice-marketplace\user-service\src\main\java\com\example\microservice\user\entity\ProductExtendAttr.java
+D:\Raunjian Rujing\intellij IDEA\workplace\microservice-marketplace\user-service\src\main\java\com\example\microservice\user\service\CaseCommentService.java
 D:\Raunjian Rujing\intellij IDEA\workplace\microservice-marketplace\user-service\src\main\java\com\example\microservice\user\mapper\ProductExtendAttrMapper.java
 D:\Raunjian Rujing\intellij IDEA\workplace\microservice-marketplace\user-service\src\main\java\com\example\microservice\user\service\impl\SubCategoryServiceImpl.java
 D:\Raunjian Rujing\intellij IDEA\workplace\microservice-marketplace\user-service\src\main\java\com\example\microservice\user\service\SubCategoryService.java
@@ -73,12 +82,17 @@ D:\Raunjian Rujing\intellij IDEA\workplace\microservice-marketplace\user-service
 D:\Raunjian Rujing\intellij IDEA\workplace\microservice-marketplace\user-service\src\main\java\com\example\microservice\user\entity\SubCategory.java
 D:\Raunjian Rujing\intellij IDEA\workplace\microservice-marketplace\user-service\src\main\java\com\example\microservice\user\mapper\SubCategoryMapper.java
 D:\Raunjian Rujing\intellij IDEA\workplace\microservice-marketplace\user-service\src\main\java\com\example\microservice\user\service\impl\StoreServiceImpl.java
+D:\Raunjian Rujing\intellij IDEA\workplace\microservice-marketplace\user-service\src\main\java\com\example\microservice\user\controller\CommunityCommentController.java
 D:\Raunjian Rujing\intellij IDEA\workplace\microservice-marketplace\user-service\src\main\java\com\example\microservice\user\service\impl\AnnouncementServiceImpl.java
 D:\Raunjian Rujing\intellij IDEA\workplace\microservice-marketplace\user-service\src\main\java\com\example\microservice\user\service\ProductService.java
+D:\Raunjian Rujing\intellij IDEA\workplace\microservice-marketplace\user-service\src\main\java\com\example\microservice\user\controller\CommunityPostController.java
 D:\Raunjian Rujing\intellij IDEA\workplace\microservice-marketplace\user-service\src\main\java\com\example\microservice\user\entity\Store.java
 D:\Raunjian Rujing\intellij IDEA\workplace\microservice-marketplace\user-service\src\main\java\com\example\microservice\user\controller\CustomPlanController.java
 D:\Raunjian Rujing\intellij IDEA\workplace\microservice-marketplace\user-service\src\main\java\com\example\microservice\user\mapper\CustomPlanMapper.java
+D:\Raunjian Rujing\intellij IDEA\workplace\microservice-marketplace\user-service\src\main\java\com\example\microservice\user\service\CommunityPostService.java
+D:\Raunjian Rujing\intellij IDEA\workplace\microservice-marketplace\user-service\src\main\java\com\example\microservice\user\entity\CommunityPost.java
 D:\Raunjian Rujing\intellij IDEA\workplace\microservice-marketplace\user-service\src\main\java\com\example\microservice\user\controller\UserController.java
+D:\Raunjian Rujing\intellij IDEA\workplace\microservice-marketplace\user-service\src\main\java\com\example\microservice\user\controller\CaseCommentController.java
 D:\Raunjian Rujing\intellij IDEA\workplace\microservice-marketplace\user-service\src\main\java\com\example\microservice\user\vo\ProductVO.java
 D:\Raunjian Rujing\intellij IDEA\workplace\microservice-marketplace\user-service\src\main\java\com\example\microservice\user\config\StaticResourceConfig.java
 D:\Raunjian Rujing\intellij IDEA\workplace\microservice-marketplace\user-service\src\main\java\com\example\microservice\user\service\OrderService.java
@@ -93,6 +107,7 @@ D:\Raunjian Rujing\intellij IDEA\workplace\microservice-marketplace\user-service
 D:\Raunjian Rujing\intellij IDEA\workplace\microservice-marketplace\user-service\src\main\java\com\example\microservice\user\entity\Order.java
 D:\Raunjian Rujing\intellij IDEA\workplace\microservice-marketplace\user-service\src\main\java\com\example\microservice\user\service\impl\CustomCaseServiceImpl.java
 D:\Raunjian Rujing\intellij IDEA\workplace\microservice-marketplace\user-service\src\main\java\com\example\microservice\user\entity\MainCategory.java
+D:\Raunjian Rujing\intellij IDEA\workplace\microservice-marketplace\user-service\src\main\java\com\example\microservice\user\entity\CaseComment.java
 D:\Raunjian Rujing\intellij IDEA\workplace\microservice-marketplace\user-service\src\main\java\com\example\microservice\user\entity\CustomPlan.java
 D:\Raunjian Rujing\intellij IDEA\workplace\microservice-marketplace\user-service\src\main\java\com\example\microservice\user\dto\ForgotPasswordRequest.java
 D:\Raunjian Rujing\intellij IDEA\workplace\microservice-marketplace\user-service\src\main\java\com\example\microservice\user\mapper\ProductCommonAttrMapper.java
@@ -104,6 +119,7 @@ D:\Raunjian Rujing\intellij IDEA\workplace\microservice-marketplace\user-service
 D:\Raunjian Rujing\intellij IDEA\workplace\microservice-marketplace\user-service\src\main\java\com\example\microservice\user\service\AnnouncementService.java
 D:\Raunjian Rujing\intellij IDEA\workplace\microservice-marketplace\user-service\src\main\java\com\example\microservice\user\dto\LoginRequest.java
 D:\Raunjian Rujing\intellij IDEA\workplace\microservice-marketplace\user-service\src\main\java\com\example\microservice\user\service\impl\CartServiceImpl.java
+D:\Raunjian Rujing\intellij IDEA\workplace\microservice-marketplace\user-service\src\main\java\com\example\microservice\user\entity\CommunityComment.java
 D:\Raunjian Rujing\intellij IDEA\workplace\microservice-marketplace\user-service\src\main\java\com\example\microservice\user\service\impl\HotSearchServiceImpl.java
 D:\Raunjian Rujing\intellij IDEA\workplace\microservice-marketplace\user-service\src\main\java\com\example\microservice\user\service\StoreService.java
 D:\Raunjian Rujing\intellij IDEA\workplace\microservice-marketplace\user-service\src\main\java\com\example\microservice\user\service\CustomCaseService.java

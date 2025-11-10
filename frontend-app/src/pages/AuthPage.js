@@ -191,25 +191,47 @@ function AuthPage() {
         e.preventDefault();
 
         try {
+            let token, user;
+            
             if (isEmailLogin) {
                 // 邮箱验证码登录
                 const response = await axios.post('http://localhost:8081/api/user/verify-code', {
                     email: loginData.email,
                     code: loginData.verificationCode
                 });
-                const { token, user } = response.data;
-                login(token, user);
-                navigate('/');
+                token = response.data.token;
+                user = response.data.user;
             } else {
                 // 普通用户名密码登录
                 const response = await axios.post('http://localhost:8081/api/user/login', {
                     username: loginData.username,
                     password: loginData.password
                 });
-                const { token, user } = response.data;
-                login(token, user);
-                navigate('/');
+                token = response.data.token;
+                user = response.data.user;
             }
+            
+            // 登录成功后，立即从后端获取最新的用户信息（确保包含最新的avatar）
+            try {
+                const currentUserResponse = await axios.get('http://localhost:8081/api/user/current', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (currentUserResponse.data.code === 200 && currentUserResponse.data.data) {
+                    // 使用最新的用户信息（包含avatar）
+                    user = currentUserResponse.data.data;
+                    console.log('登录后获取最新用户信息，头像URL:', user.avatar);
+                }
+            } catch (error) {
+                console.error('获取最新用户信息失败，使用登录返回的用户信息:', error);
+                // 如果获取失败，继续使用登录返回的用户信息
+            }
+            
+            // 使用最新的用户信息进行登录
+            login(token, user);
+            navigate('/');
         } catch (error) {
             console.error('登录失败', error.response ? error.response.data : error.message);
             const errorMessage = error.response && error.response.data.message

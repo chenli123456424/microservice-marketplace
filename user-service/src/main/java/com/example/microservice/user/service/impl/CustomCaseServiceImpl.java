@@ -1,6 +1,7 @@
 package com.example.microservice.user.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.example.microservice.user.entity.CustomCase;
 import com.example.microservice.user.mapper.CustomCaseMapper;
@@ -73,8 +74,23 @@ public class CustomCaseServiceImpl implements CustomCaseService {
     
     @Override
     public boolean update(CustomCase customCase) {
-        customCase.setUpdateTime(LocalDateTime.now());
-        return customCaseMapper.updateById(customCase) > 0;
+        // 使用UpdateWrapper强制更新likeCount和likedUserIds字段
+        LambdaUpdateWrapper<CustomCase> updateWrapper = new LambdaUpdateWrapper<>();
+        updateWrapper.eq(CustomCase::getId, customCase.getId());
+        
+        // 强制设置likeCount，确保不为null
+        Integer likeCountValue = customCase.getLikeCount() != null ? customCase.getLikeCount() : 0;
+        updateWrapper.set(CustomCase::getLikeCount, likeCountValue);
+        
+        // 强制设置likedUserIds（可以是null）
+        updateWrapper.set(CustomCase::getLikedUserIds, customCase.getLikedUserIds());
+        
+        // 设置更新时间
+        updateWrapper.set(CustomCase::getUpdateTime, LocalDateTime.now());
+        
+        // 执行更新
+        int result = customCaseMapper.update(null, updateWrapper);
+        return result > 0;
     }
     
     @Override

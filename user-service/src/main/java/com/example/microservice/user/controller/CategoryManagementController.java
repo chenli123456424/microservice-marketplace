@@ -440,9 +440,16 @@ public class CategoryManagementController {
                 return ResponseResult.error("只支持图片文件");
             }
             
-            // 使用项目根目录下的uploads文件夹
+            // 统一使用项目根目录下的uploads/subcategory文件夹
             String projectRoot = System.getProperty("user.dir");
-            java.nio.file.Path uploadDir = java.nio.file.Paths.get(projectRoot, "uploads", "subcategory");
+            java.nio.file.Path uploadDir;
+            if (projectRoot.endsWith("user-service")) {
+                // 如果当前工作目录是user-service，向上一级找到项目根目录
+                uploadDir = java.nio.file.Paths.get(projectRoot, "..", "uploads", "subcategory").toAbsolutePath().normalize();
+            } else {
+                // 如果当前工作目录已经是项目根目录
+                uploadDir = java.nio.file.Paths.get(projectRoot, "uploads", "subcategory").toAbsolutePath();
+            }
             
             // 确保目录存在
             if (!java.nio.file.Files.exists(uploadDir)) {

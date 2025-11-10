@@ -2,6 +2,7 @@ package com.example.microservice.user.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
@@ -92,17 +93,31 @@ public class SecurityConfig {
                                 "/api/admin/products/search",
                                 "/api/admin/products/**",
                                 "/api/admin/upload",
-                                "/api/cart/**",
                                 "/api/orders/**",
                                 "/api/admin/category/**",
                                 "/api/announcement/**",
-                                "/api/custom-cases/**",
+                                "/api/custom-cases/{id}",
+                                "/api/custom-cases/page",
+                                "/api/custom-cases/list",
+                                "/api/custom-cases/*/like-status",
+                                "/api/custom-cases/*/view",
+                                "/api/case-comments/**",
                                 "/api/designers/**",
                                 "/api/custom-plans/**",
                                 "/api/appointments/**",
                                 "/api/stores/**",
+                                "/api/logistics/**",
+                                "/api/community-posts/page",
+                                "/api/community-posts/list",
+                                "/api/community-posts/{id}",
+                                "/api/community-posts/*/like-status",
+                                "/api/community-comments/page",
+                                "/api/community-comments/list",
                                 "/uploads/**"
                         ).permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/community-posts/my-posts").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/community-posts/*/like").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/custom-cases/*/like").authenticated()
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));

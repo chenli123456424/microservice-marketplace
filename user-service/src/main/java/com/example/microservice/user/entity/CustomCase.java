@@ -92,6 +92,12 @@ public class CustomCase implements Serializable {
     private Integer likeCount;
     
     /**
+     * 点赞用户ID列表（JSON数组格式）
+     */
+    @TableField("liked_user_ids")
+    private String likedUserIds;
+    
+    /**
      * 排序权重（越大越靠前）
      */
     @TableField("sort_order")

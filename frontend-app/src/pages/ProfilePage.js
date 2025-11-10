@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { showModal } from '../utils/modal';
 import './ProfilePage.css';
 
 function ProfilePage() {
@@ -17,7 +18,6 @@ function ProfilePage() {
     });
     const [avatarPreview, setAvatarPreview] = useState('');
     const [uploading, setUploading] = useState(false);
-    const [message, setMessage] = useState({ type: '', text: '' });
 
     useEffect(() => {
         if (!isAuthenticated) {
@@ -37,17 +37,32 @@ function ProfilePage() {
             });
             if (response.data.code === 200 && response.data.data) {
                 const user = response.data.data;
+                console.log('ProfilePage - 获取到的用户信息:', user);
+                console.log('ProfilePage - 用户头像字段:', user.avatar);
+                console.log('ProfilePage - 头像类型:', typeof user.avatar);
+                
                 setUserInfo(user);
                 setFormData({
                     username: user.username || '',
                     email: user.email || '',
                     avatar: user.avatar || ''
                 });
-                setAvatarPreview(user.avatar ? `http://localhost:8081${user.avatar}` : '');
+                // 构建头像预览URL
+                if (user.avatar && typeof user.avatar === 'string' && user.avatar.trim() !== '') {
+                    let avatarUrl = user.avatar.trim();
+                    if (!avatarUrl.startsWith('http://') && !avatarUrl.startsWith('https://')) {
+                        avatarUrl = `http://localhost:8081${avatarUrl.startsWith('/') ? '' : '/'}${avatarUrl}`;
+                    }
+                    console.log('ProfilePage - 构建的头像URL:', avatarUrl);
+                    setAvatarPreview(avatarUrl);
+                } else {
+                    console.log('ProfilePage - 头像为空或无效，设置为空字符串');
+                    setAvatarPreview('');
+                }
             }
         } catch (error) {
             console.error('获取用户信息失败:', error);
-            setMessage({ type: 'error', text: '获取用户信息失败' });
+            showModal.error('获取用户信息失败');
         } finally {
             setLoading(false);
         }
@@ -67,13 +82,13 @@ function ProfilePage() {
 
         // 检查文件类型
         if (!file.type.startsWith('image/')) {
-            setMessage({ type: 'error', text: '请选择图片文件' });
+            showModal.error('请选择图片文件');
             return;
         }
 
         // 检查文件大小（限制为5MB）
         if (file.size > 5 * 1024 * 1024) {
-            setMessage({ type: 'error', text: '图片大小不能超过5MB' });
+            showModal.error('图片大小不能超过5MB');
             return;
         }
 
@@ -96,8 +111,17 @@ function ProfilePage() {
             if (response.data.code === 200) {
                 const avatarUrl = response.data.data;
                 setFormData(prev => ({ ...prev, avatar: avatarUrl }));
-                setAvatarPreview(`http://localhost:8081${avatarUrl}?t=${Date.now()}`); // 添加时间戳防止缓存
-                setMessage({ type: 'success', text: '头像上传成功' });
+                // 构建头像预览URL
+                if (avatarUrl && avatarUrl.trim() !== '') {
+                    let previewUrl = avatarUrl;
+                    if (!previewUrl.startsWith('http://') && !previewUrl.startsWith('https://')) {
+                        previewUrl = `http://localhost:8081${previewUrl.startsWith('/') ? '' : '/'}${previewUrl}`;
+                    }
+                    setAvatarPreview(`${previewUrl}?t=${Date.now()}`); // 添加时间戳防止缓存
+                } else {
+                    setAvatarPreview('');
+                }
+                showModal.success('头像上传成功');
                 
                 // 立即更新Context，使用最新的avatarUrl
                 // 先获取完整的用户信息，确保数据完整
@@ -119,11 +143,11 @@ function ProfilePage() {
                 // 更新本地用户信息用于页面显示
                 await fetchUserInfo();
             } else {
-                setMessage({ type: 'error', text: response.data.message || '头像上传失败' });
+                showModal.error(response.data.message || '头像上传失败');
             }
         } catch (error) {
             console.error('头像上传失败:', error);
-            setMessage({ type: 'error', text: '头像上传失败: ' + (error.response?.data?.message || error.message) });
+            showModal.error('头像上传失败: ' + (error.response?.data?.message || error.message));
         } finally {
             setUploading(false);
         }
@@ -146,7 +170,7 @@ function ProfilePage() {
             );
 
             if (response.data.code === 200) {
-                setMessage({ type: 'success', text: '个人信息更新成功' });
+                showModal.success('个人信息更新成功');
                 setEditing(false);
                 // 更新用户信息到Context，实现全局实时刷新
                 if (response.data.data) {
@@ -154,11 +178,11 @@ function ProfilePage() {
                 }
                 await fetchUserInfo();
             } else {
-                setMessage({ type: 'error', text: response.data.message || '更新失败' });
+                showModal.error(response.data.message || '更新失败');
             }
         } catch (error) {
             console.error('更新用户信息失败:', error);
-            setMessage({ type: 'error', text: '更新失败: ' + (error.response?.data?.message || error.message) });
+            showModal.error('更新失败: ' + (error.response?.data?.message || error.message));
         }
     };
 
@@ -169,10 +193,18 @@ function ProfilePage() {
                 email: userInfo.email || '',
                 avatar: userInfo.avatar || ''
             });
-            setAvatarPreview(userInfo.avatar ? `http://localhost:8081${userInfo.avatar}` : '');
+            // 构建头像预览URL
+            if (userInfo.avatar && userInfo.avatar.trim() !== '') {
+                let avatarUrl = userInfo.avatar;
+                if (!avatarUrl.startsWith('http://') && !avatarUrl.startsWith('https://')) {
+                    avatarUrl = `http://localhost:8081${avatarUrl.startsWith('/') ? '' : '/'}${avatarUrl}`;
+                }
+                setAvatarPreview(avatarUrl);
+            } else {
+                setAvatarPreview('');
+            }
         }
         setEditing(false);
-        setMessage({ type: '', text: '' });
     };
 
     if (loading) {
@@ -199,28 +231,46 @@ function ProfilePage() {
         <div className="profile-page">
             <div className="profile-container">
                 <h1 className="profile-title">个人信息</h1>
-                
-                {message.text && (
-                    <div className={`message ${message.type}`}>
-                        {message.text}
-                    </div>
-                )}
 
                 <div className="profile-content">
                     {/* 头像部分 */}
                     <div className="avatar-section">
                         <div className="avatar-wrapper">
-                            {avatarPreview ? (
-                                <img 
-                                    src={avatarPreview} 
-                                    alt="头像" 
-                                    className="avatar-image"
-                                />
-                            ) : (
-                                <div className="avatar-placeholder">
-                                    👤
-                                </div>
-                            )}
+                            {(() => {
+                                console.log('ProfilePage - 渲染头像，avatarPreview:', avatarPreview);
+                                console.log('ProfilePage - userInfo.avatar:', userInfo?.avatar);
+                                
+                                const hasAvatar = avatarPreview && typeof avatarPreview === 'string' && avatarPreview.trim() !== '';
+                                
+                                if (hasAvatar) {
+                                    return (
+                                        <img 
+                                            src={avatarPreview} 
+                                            alt="头像" 
+                                            className="avatar-image"
+                                            onError={(e) => {
+                                                console.error('头像加载失败:', {
+                                                    avatarPreview: avatarPreview,
+                                                    userAvatar: userInfo?.avatar,
+                                                    error: e
+                                                });
+                                                e.target.style.display = 'none';
+                                                if (e.target.nextSibling) {
+                                                    e.target.nextSibling.style.display = 'flex';
+                                                }
+                                            }}
+                                            onLoad={() => {
+                                                console.log('头像加载成功:', avatarPreview);
+                                            }}
+                                        />
+                                    );
+                                }
+                                return (
+                                    <div className="avatar-placeholder">
+                                        {userInfo?.username ? userInfo.username.charAt(0).toUpperCase() : '👤'}
+                                    </div>
+                                );
+                            })()}
                         </div>
                         {editing && (
                             <div className="avatar-upload">

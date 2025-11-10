@@ -35,18 +35,22 @@ const DesignerPage = () => {
 
     // 处理预约设计师
     const handleAppointment = (designerId) => {
-        navigate('/custom', { state: { scrollToAppointment: true, selectedDesignerId: designerId } });
+        navigate(`/custom?tab=appointment${designerId ? `&designerId=${designerId}` : ''}`);
     };
 
     // 获取头像URL
     const getAvatarUrl = (avatar) => {
-        if (!avatar) {
-            return '/images/default-avatar.jpg';
+        if (!avatar || typeof avatar !== 'string' || avatar.trim() === '') {
+            return null; // 返回null，让前端显示占位符
         }
-        if (avatar.startsWith('http') || avatar.startsWith('data:')) {
-            return avatar;
+        const trimmedAvatar = avatar.trim();
+        if (trimmedAvatar.startsWith('http://') || trimmedAvatar.startsWith('https://') || trimmedAvatar.startsWith('data:')) {
+            return trimmedAvatar;
         }
-        return `http://localhost:8081${avatar}`;
+        // 确保路径以 / 开头
+        const avatarPath = trimmedAvatar.startsWith('/') ? trimmedAvatar : `/${trimmedAvatar}`;
+        const fullUrl = `http://localhost:8081${avatarPath}`;
+        return fullUrl;
     };
 
     if (loading) {
@@ -349,14 +353,42 @@ const DesignerPage = () => {
                         {designers.map((designer) => (
                             <div key={designer.id} className="designer-card">
                                 <div className="designer-card-header">
-                                    <img
-                                        src={getAvatarUrl(designer.avatar)}
-                                        alt={designer.name}
-                                        className="designer-avatar"
-                                        onError={(e) => {
-                                            e.target.src = '/images/default-avatar.jpg';
+                                    {getAvatarUrl(designer.avatar) ? (
+                                        <img
+                                            src={getAvatarUrl(designer.avatar)}
+                                            alt={designer.name}
+                                            className="designer-avatar"
+                                            onError={(e) => {
+                                                console.error('DesignerPage - 头像加载失败:', {
+                                                    designerId: designer.id,
+                                                    designerName: designer.name,
+                                                    avatar: designer.avatar,
+                                                    attemptedUrl: e.target.src
+                                                });
+                                                e.target.style.display = 'none';
+                                                // 显示占位符
+                                                const placeholder = e.target.parentElement.querySelector('.designer-avatar-placeholder');
+                                                if (placeholder) {
+                                                    placeholder.style.display = 'flex';
+                                                }
+                                            }}
+                                        />
+                                    ) : null}
+                                    <div 
+                                        className="designer-avatar-placeholder"
+                                        style={{
+                                            display: getAvatarUrl(designer.avatar) ? 'none' : 'flex',
+                                            width: '100%',
+                                            height: '100%',
+                                            backgroundColor: '#f0f0f0',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            fontSize: '48px',
+                                            color: '#999'
                                         }}
-                                    />
+                                    >
+                                        {designer.name ? designer.name.charAt(0) : '👤'}
+                                    </div>
                                     {designer.status === 1 && (
                                         <div className="designer-status-badge">在线</div>
                                     )}
@@ -416,7 +448,7 @@ const DesignerPage = () => {
                                         </button>
                                         <button
                                             className="btn-view-detail"
-                                            onClick={() => navigate(`/custom`, { state: { scrollToDesigner: true, designerId: designer.id } })}
+                                            onClick={() => navigate(`/designer/${designer.id}`)}
                                         >
                                             查看详情
                                         </button>

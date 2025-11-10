@@ -19,6 +19,12 @@ interface Appointment {
   budget: string;
   remark: string;
   designerId: number;
+  designerName?: string;
+  designer?: {
+    id: number;
+    name: string;
+    title: string;
+  };
   status: number;
   handlerId: number;
   handleTime: string;
@@ -82,6 +88,21 @@ const AppointmentList: React.FC = () => {
       dataIndex: 'budget',
       width: 120,
       search: false,
+    },
+    {
+      title: '设计师',
+      dataIndex: 'designerName',
+      width: 120,
+      search: false,
+      render: (text, record) => {
+        if (record.designerName) {
+          return record.designerName;
+        }
+        if (record.designer) {
+          return record.designer.name;
+        }
+        return '-';
+      },
     },
     {
       title: '备注',
@@ -161,6 +182,7 @@ const AppointmentList: React.FC = () => {
                   <p><strong>房屋面积：</strong>{record.area ? `${record.area}㎡` : '-'}</p>
                   <p><strong>装修风格：</strong>{record.style || '-'}</p>
                   <p><strong>预算范围：</strong>{record.budget || '-'}</p>
+                  <p><strong>指定设计师：</strong>{record.designerName || record.designer?.name || '未指定'}</p>
                   <p><strong>客户备注：</strong>{record.remark || '-'}</p>
                   <p><strong>状态：</strong>{statusMap[record.status as keyof typeof statusMap].text}</p>
                   {record.handleRemark && (

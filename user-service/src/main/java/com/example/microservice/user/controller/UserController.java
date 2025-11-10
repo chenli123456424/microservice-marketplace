@@ -309,6 +309,18 @@ public class UserController {
             
             // 不返回密码
             user.setPassword(null);
+            
+            // 如果关注量、粉丝量、获赞量为null，设置为0
+            if (user.getFollowCount() == null) {
+                user.setFollowCount(0);
+            }
+            if (user.getFollowerCount() == null) {
+                user.setFollowerCount(0);
+            }
+            if (user.getLikeReceivedCount() == null) {
+                user.setLikeReceivedCount(0);
+            }
+            
             return ResponseResult.success(user);
         } catch (Exception e) {
             return ResponseResult.error("获取用户信息失败: " + e.getMessage());
@@ -378,9 +390,16 @@ public class UserController {
                 return ResponseResult.error("只支持图片文件");
             }
             
-            // 使用项目根目录下的uploads/avatar文件夹
+            // 统一使用项目根目录下的uploads/avatar文件夹
             String projectRoot = System.getProperty("user.dir");
-            Path uploadDir = Paths.get(projectRoot, "uploads", "avatar");
+            Path uploadDir;
+            if (projectRoot.endsWith("user-service")) {
+                // 如果当前工作目录是user-service，向上一级找到项目根目录
+                uploadDir = Paths.get(projectRoot, "..", "uploads", "avatar").toAbsolutePath().normalize();
+            } else {
+                // 如果当前工作目录已经是项目根目录
+                uploadDir = Paths.get(projectRoot, "uploads", "avatar").toAbsolutePath();
+            }
             
             // 确保目录存在
             if (!Files.exists(uploadDir)) {

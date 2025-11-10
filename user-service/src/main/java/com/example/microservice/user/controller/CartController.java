@@ -26,6 +26,9 @@ public class CartController {
     private UserService userService;
 
     private Long getUserId(Authentication authentication) {
+        if (authentication == null) {
+            throw new RuntimeException("用户未认证，请先登录");
+        }
         String username = authentication.getName();
         User user = userService.findByUsername(username);
         if (user == null) {

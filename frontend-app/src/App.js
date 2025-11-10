@@ -16,8 +16,14 @@ import ProfilePage from "./pages/ProfilePage"; // 添加个人信息页面导入
 import NotificationPage from "./pages/NotificationPage"; // 添加通知详情页面导入
 import NotificationManagementPage from "./pages/NotificationManagementPage"; // 添加通知管理页面导入
 import CustomDesignPage from "./pages/CustomDesignPage"; // 添加全屋定制页面导入
+import CaseDetailPage from "./pages/CaseDetailPage"; // 添加案例详情页导入
 import DesignerPage from "./pages/DesignerPage"; // 添加设计师页面导入
+import DesignerDetailPage from "./pages/DesignerDetailPage"; // 设计师详情页
+import ServiceCenterPage from "./pages/ServiceCenterPage"; // 服务中心
 import StorePage from "./pages/StorePage"; // 添加门店页面导入
+import CommunityPage from "./pages/CommunityPage"; // 社区/灵感
+import PostDetailPage from "./pages/PostDetailPage"; // 帖子详情页
+import PublishPostPage from "./pages/PublishPostPage"; // 发布帖子页
 import { AuthProvider } from './context/AuthContext';
 import TopNavigation from './components/TopNavigation';
 import NotificationPopupManager from './components/NotificationPopup';
@@ -45,8 +51,14 @@ function AppContent() {
         <Route path="/orders" element={<MyOrdersPage />} />
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/custom" element={<CustomDesignPage />} />
+        <Route path="/case/:caseId" element={<CaseDetailPage />} />
         <Route path="/designers" element={<DesignerPage />} />
+        <Route path="/designer/:designerId" element={<DesignerDetailPage />} />
+        <Route path="/service" element={<ServiceCenterPage />} />
         <Route path="/stores" element={<StorePage />} />
+        <Route path="/community" element={<CommunityPage />} />
+        <Route path="/post/:postId" element={<PostDetailPage />} />
+        <Route path="/publish-post" element={<PublishPostPage />} />
         <Route path="/notifications" element={<NotificationManagementPage />} />
         <Route path="/notification/:id" element={<NotificationPage />} />
       </Routes>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import FooterSection from '../components/FooterSection';
 import RightSidebar from '../components/RightSidebar';
@@ -7,7 +8,24 @@ import { showModal } from '../utils/modal';
 const API_BASE_URL = 'http://localhost:8081/api';
 
 const CustomDesignPage = () => {
-    const [activeTab, setActiveTab] = useState('service');
+    const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
+    // 从URL参数中获取tab，如果没有则默认为'service'
+    const [activeTab, setActiveTab] = useState(() => {
+        const tab = searchParams.get('tab');
+        return tab || 'service';
+    });
+    
+    // 当URL参数变化时，更新activeTab
+    useEffect(() => {
+        const tab = searchParams.get('tab');
+        if (tab) {
+            setActiveTab(tab);
+        } else {
+            // 如果没有tab参数，默认显示服务介绍
+            setActiveTab('service');
+        }
+    }, [searchParams]);
     
     // 从后端获取的数据
     const [cases, setCases] = useState([]);
@@ -44,6 +62,19 @@ const CustomDesignPage = () => {
         };
         fetchDesigners();
     }, []);
+
+    // URL参数带入的设计师自动选中 + 自动切换到预约tab
+    useEffect(() => {
+        const idFromUrl = searchParams.get('designerId');
+        if (idFromUrl) {
+            setFormData(prev => ({ ...prev, designerId: idFromUrl }));
+            // 如果未显式传入tab，也切到预约
+            const tab = searchParams.get('tab');
+            if (!tab) {
+                setActiveTab('appointment');
+            }
+        }
+    }, [searchParams]);
     
     // 获取定制方案数据
     useEffect(() => {
@@ -95,7 +126,8 @@ const CustomDesignPage = () => {
         area: '',
         style: '',
         budget: '',
-        message: ''
+        message: '',
+        designerId: ''
     });
     const [calculatorData, setCalculatorData] = useState({
         roomType: '',
@@ -170,7 +202,8 @@ const CustomDesignPage = () => {
                 area: formData.area ? parseInt(formData.area) : null,
                 style: formData.style,
                 budget: formData.budget,
-                remark: formData.message
+                remark: formData.message,
+                designerId: formData.designerId ? parseInt(formData.designerId) : null
             });
             
             if (response.data.code === 200) {
@@ -182,7 +215,8 @@ const CustomDesignPage = () => {
                     area: '',
                     style: '',
                     budget: '',
-                    message: ''
+                    message: '',
+                    designerId: ''
                 });
             } else {
                 showModal.error(response.data.message || '预约失败');
@@ -289,7 +323,11 @@ const CustomDesignPage = () => {
                 ].map(tab => (
                     <button
                         key={tab.key}
-                        onClick={() => setActiveTab(tab.key)}
+                        onClick={() => {
+                            setActiveTab(tab.key);
+                            // 更新URL参数，但不刷新页面
+                            navigate(`/custom?tab=${tab.key}`, { replace: true });
+                        }}
                         style={{
                             padding: '20px 0',
                             border: 'none',
@@ -719,9 +757,9 @@ const CustomDesignPage = () => {
                                 }}
                                 onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-5px)'}
                                 onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
-                                                                 onClick={() => {
-                                     // 可以在这里添加案例详情页面跳转逻辑
-                                 }}
+                                onClick={() => {
+                                    navigate(`/case/${caseItem.id}`);
+                                }}
                                 >
                                     <div style={{
                                         height: '300px',
@@ -1449,6 +1487,37 @@ const CustomDesignPage = () => {
                                             <option value="20-30">20-30万</option>
                                             <option value="30-50">30-50万</option>
                                             <option value="over-50">50万以上</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label style={{
+                                            display: 'block',
+                                            marginBottom: '10px',
+                                            fontWeight: 'bold',
+                                            fontSize: '16px'
+                                        }}>
+                                            选择设计师
+                                        </label>
+                                        <select
+                                            value={formData.designerId}
+                                            onChange={(e) => setFormData({
+                                                ...formData,
+                                                designerId: e.target.value
+                                            })}
+                                            style={{
+                                                width: '100%',
+                                                padding: '12px',
+                                                border: '1px solid #ddd',
+                                                borderRadius: '8px',
+                                                fontSize: '16px'
+                                            }}
+                                        >
+                                            <option value="">请选择（可选）</option>
+                                            {designers.map(designer => (
+                                                <option key={designer.id} value={designer.id}>
+                                                    {designer.name} - {designer.title}
+                                                </option>
+                                            ))}
                                         </select>
                                     </div>
                                 </div>

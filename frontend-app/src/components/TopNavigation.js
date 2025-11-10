@@ -18,7 +18,7 @@ function TopNavigation() {
     const [isNotificationMenuOpen, setIsNotificationMenuOpen] = useState(false);
     const [announcements, setAnnouncements] = useState([]);
     
-    const { isAuthenticated, logout, token, user } = useAuth();
+    const { isAuthenticated, logout, token, user, updateUser } = useAuth();
     const navigate = useNavigate();
 
     const handleLogout = () => {
@@ -276,9 +276,38 @@ function TopNavigation() {
         return () => clearInterval(interval);
     }, []);
 
+    // 如果用户已登录，确保从后端获取最新的用户信息（包括avatar）
+    useEffect(() => {
+        if (isAuthenticated && token) {
+            // 如果用户信息不存在，或者avatar字段缺失/为空，从后端获取最新信息
+            const hasValidAvatar = user?.avatar && typeof user.avatar === 'string' && user.avatar.trim() !== '';
+            const shouldRefresh = !user || !user.id || !hasValidAvatar;
+            
+            if (shouldRefresh) {
+                console.log('TopNavigation: 刷新用户信息，当前avatar:', user?.avatar);
+                axios.get('http://localhost:8081/api/user/current', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                }).then(response => {
+                    if (response.data.code === 200 && response.data.data) {
+                        const latestUser = response.data.data;
+                        console.log('TopNavigation: 获取到最新用户信息，头像URL:', latestUser.avatar);
+                        // 更新用户信息（无论头像是否存在，都更新以保持数据同步）
+                        updateUser(latestUser);
+                    }
+                }).catch(error => {
+                    console.error('TopNavigation: 获取用户信息失败:', error);
+                });
+            }
+        }
+    }, [isAuthenticated, token]); // 只在认证状态和token变化时检查，避免无限循环
+
     // 监听user.avatar变化，仅在URL真正变化时更新版本号
     useEffect(() => {
-        if (user?.avatar) {
+        // 检查头像是否存在且不为空字符串
+        const hasAvatar = user?.avatar && typeof user.avatar === 'string' && user.avatar.trim() !== '';
+        if (hasAvatar) {
             // 只在avatar URL变化时更新版本号，避免不必要的刷新
             setAvatarVersion(prev => {
                 // 使用URL作为版本标识，只有URL变化时才增加版本号
@@ -290,6 +319,13 @@ function TopNavigation() {
                 }
                 return prev;
             });
+        } else {
+            // 如果头像被清空，也更新版本号以显示占位符
+            const storedAvatar = sessionStorage.getItem('lastAvatar');
+            if (storedAvatar) {
+                sessionStorage.removeItem('lastAvatar');
+                setAvatarVersion(prev => prev + 1);
+            }
         }
     }, [user?.avatar]);
 
@@ -792,22 +828,39 @@ function TopNavigation() {
                             onMouseLeave={() => setIsUserMenuOpen(false)}
                         >
                             <button className="menu-button">
-                                {user?.avatar ? (
-                                    <img 
-                                        key={`avatar-${user.avatar}-${avatarVersion}`} // 使用avatar版本确保头像更新时重新渲染
-                                        src={`http://localhost:8081${user.avatar}${user.avatar.includes('?') ? '&' : '?'}v=${avatarVersion}`}
-                                        alt="用户头像"
-                                        className="user-avatar"
-                                        onError={(e) => {
-                                            console.error('头像加载失败:', user.avatar);
-                                            e.target.style.display = 'none';
-                                            if (e.target.nextSibling) {
-                                                e.target.nextSibling.style.display = 'block';
-                                            }
-                                        }}
-                                    />
-                                ) : null}
-                                {!user?.avatar && <span>👤</span>}
+                                {(() => {
+                                    // 检查头像是否存在且不为空字符串
+                                    const hasAvatar = user?.avatar && typeof user.avatar === 'string' && user.avatar.trim() !== '';
+                                    
+                                    if (hasAvatar) {
+                                        // 构建头像URL
+                                        let avatarUrl = user.avatar.trim();
+                                        // 如果已经是完整URL，直接使用；否则添加前缀
+                                        if (!avatarUrl.startsWith('http://') && !avatarUrl.startsWith('https://')) {
+                                            avatarUrl = `http://localhost:8081${avatarUrl.startsWith('/') ? '' : '/'}${avatarUrl}`;
+                                        }
+                                        // 添加版本号防止缓存
+                                        avatarUrl = `${avatarUrl}${avatarUrl.includes('?') ? '&' : '?'}v=${avatarVersion}`;
+                                        
+                                        return (
+                                            <img 
+                                                key={`avatar-${user.avatar}-${avatarVersion}`}
+                                                src={avatarUrl}
+                                                alt="用户头像"
+                                                className="user-avatar"
+                                                onError={(e) => {
+                                                    console.error('头像加载失败，URL:', avatarUrl, '原始值:', user.avatar);
+                                                    e.target.style.display = 'none';
+                                                    if (e.target.nextSibling) {
+                                                        e.target.nextSibling.style.display = 'block';
+                                                    }
+                                                }}
+                                            />
+                                        );
+                                    }
+                                    return null;
+                                })()}
+                                {(!user?.avatar || typeof user?.avatar !== 'string' || user.avatar.trim() === '') && <span>👤</span>}
                                 {user?.username && (
                                     <span className="username-text">{user.username}</span>
                                 )}
@@ -815,11 +868,11 @@ function TopNavigation() {
                             
                             {isUserMenuOpen && (
                                 <div className="dropdown-menu">
+                                    <Link to="/publish-post" className="dropdown-link">
+                                        发布帖子
+                                    </Link>
                                     <Link to="/orders" className="dropdown-link">
                                         我的订单
-                                    </Link>
-                                    <Link to="/coupons" className="dropdown-link">
-                                        我的优惠券
                                     </Link>
                                     <Link to="/profile" className="dropdown-link">
                                         个人信息

@@ -113,4 +113,16 @@ public class Appointment implements Serializable {
      */
     @TableField("update_time")
     private LocalDateTime updateTime;
+    
+    /**
+     * 非持久化字段：设计师信息
+     */
+    @com.baomidou.mybatisplus.annotation.TableField(exist = false)
+    private com.example.microservice.user.entity.Designer designer;
+    
+    /**
+     * 非持久化字段：设计师姓名（用于显示）
+     */
+    @com.baomidou.mybatisplus.annotation.TableField(exist = false)
+    private String designerName;
 }
