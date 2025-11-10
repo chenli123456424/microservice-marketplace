@@ -131,17 +131,65 @@ CREATE DATABASE ecommerce_user CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 #### 1.2 执行初始化脚本
 
-按顺序执行以下SQL脚本（位于 `sql/` 目录）：
+执行以下SQL脚本（位于 `sql/` 目录）：
 
 ```bash
-# 1. 初始化数据库表结构
-mysql -u root -p ecommerce_user < sql/init_database.sql
+# 初始化数据库表结构（包含所有表）
+mysql -u root -p ecommerce_user < sql/init_all_tables.sql
+```
 
-# 2. 创建全屋定制相关表
-mysql -u root -p ecommerce_user < sql/custom_design_tables.sql
+**注意**：执行 SQL 脚本时，请确保使用 UTF-8 编码，避免中文注释乱码。推荐使用以下方式：
 
-# 3. 插入初始数据（可选）
-mysql -u root -p ecommerce_user < sql/insert_data.sql
+**方式1：使用 Get-Content 指定 UTF-8 编码（PowerShell）**
+
+```powershell
+# 设置 PowerShell 输出编码为 UTF-8
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+
+# 使用 Get-Content 读取文件并指定 UTF-8 编码
+Get-Content sql/init_all_tables.sql -Encoding UTF8 | mysql -h localhost -P 3307 -u root -p123456 ecommerce_user --default-character-set=utf8mb4
+```
+
+**方式2：在 MySQL 客户端内使用 source 命令**
+
+```bash
+# 先连接到 MySQL
+mysql -h localhost -P 3307 -u root -p --default-character-set=utf8mb4
+
+# 在 MySQL 客户端内执行
+mysql> use ecommerce_user;
+mysql> source sql/init_all_tables.sql;
+```
+
+**方式3：使用 Python 脚本执行（最可靠）**
+
+```python
+import pymysql
+
+config = {
+    'host': 'localhost',
+    'port': 3307,
+    'user': 'root',
+    'password': '123456',
+    'database': 'ecommerce_user',
+    'charset': 'utf8mb4'
+}
+
+conn = pymysql.connect(**config)
+cursor = conn.cursor()
+
+# 读取 SQL 文件（UTF-8 编码）
+with open('sql/init_all_tables.sql', 'r', encoding='utf-8') as f:
+    sql = f.read()
+    
+# 执行 SQL（可以按分号分割执行多条语句）
+for statement in sql.split(';'):
+    if statement.strip():
+        cursor.execute(statement)
+        conn.commit()
+
+cursor.close()
+conn.close()
 ```
 
 #### 1.3 修改数据库配置
@@ -257,9 +305,7 @@ microservice-marketplace/
 │   │   └── services/        # API服务
 │   └── package.json
 ├── sql/                      # 数据库脚本
-│   ├── init_database.sql    # 初始化脚本
-│   ├── custom_design_tables.sql
-│   └── insert_data.sql
+│   └── init_all_tables.sql  # 初始化脚本（包含所有表）
 └── uploads/                  # 上传文件目录
 ```
 
@@ -324,4 +370,3 @@ http://localhost:8081/swagger-ui.html
 ## 🙏 致谢
 
 感谢所有为本项目做出贡献的开发者！
-
