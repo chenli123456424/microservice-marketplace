@@ -22,5 +22,10 @@ public class AnnouncementServiceImpl extends ServiceImpl<AnnouncementMapper, Ann
     public List<Announcement> getActiveAnnouncements() {
         return announcementMapper.selectActiveAnnouncements();
     }
+    
+    @Override
+    public List<Announcement> listWithoutContent() {
+        return announcementMapper.selectAllWithoutContent();
+    }
 }
 

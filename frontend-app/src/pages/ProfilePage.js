@@ -6,7 +6,7 @@ import { showModal } from '../utils/modal';
 import './ProfilePage.css';
 
 function ProfilePage() {
-    const { token, isAuthenticated, updateUser } = useAuth();
+    const { token, isAuthenticated, updateUser, logout } = useAuth();
     const navigate = useNavigate();
     const [userInfo, setUserInfo] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -207,6 +207,79 @@ function ProfilePage() {
         setEditing(false);
     };
 
+    const handleCancelAccount = () => {
+        showModal.confirm(
+            '确定要注销账号吗？注销后账号将被删除，所有数据将无法恢复。',
+            '账号注销',
+            async () => {
+                try {
+                    const response = await axios.post(
+                        'http://localhost:8081/api/user/current/cancel',
+                        {},
+                        {
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'application/json'
+                            }
+                        }
+                    );
+
+                    if (response.data.code === 200) {
+                        showModal.success('账号注销成功');
+                        // 注销成功后退出登录并跳转到首页
+                        logout(); // 清除本地存储的token和user
+                        setTimeout(() => {
+                            navigate('/');
+                        }, 2000);
+                    } else {
+                        showModal.error(response.data.message || '注销失败');
+                    }
+                } catch (error) {
+                    console.error('注销账号失败:', error);
+                    showModal.error('注销失败: ' + (error.response?.data?.message || error.message));
+                }
+            },
+            () => {
+                // 取消操作
+            }
+        );
+    };
+
+    const handleRevokeCancellation = () => {
+        showModal.confirm(
+            '确定要撤销注销吗？撤销后账号将恢复正常状态。',
+            '撤销注销',
+            async () => {
+                try {
+                    const response = await axios.post(
+                        'http://localhost:8081/api/user/current/revoke-cancellation',
+                        {},
+                        {
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'application/json'
+                            }
+                        }
+                    );
+
+                    if (response.data.code === 200) {
+                        showModal.success('撤销注销成功');
+                        // 刷新用户信息
+                        await fetchUserInfo();
+                    } else {
+                        showModal.error(response.data.message || '撤销注销失败');
+                    }
+                } catch (error) {
+                    console.error('撤销注销失败:', error);
+                    showModal.error('撤销注销失败: ' + (error.response?.data?.message || error.message));
+                }
+            },
+            () => {
+                // 取消操作
+            }
+        );
+    };
+
     if (loading) {
         return (
             <div className="profile-page">
@@ -347,12 +420,31 @@ function ProfilePage() {
                                     </button>
                                 </>
                             ) : (
-                                <button 
-                                    className="btn btn-primary" 
-                                    onClick={() => setEditing(true)}
-                                >
-                                    编辑信息
-                                </button>
+                                <>
+                                    <button 
+                                        className="btn btn-primary" 
+                                        onClick={() => setEditing(true)}
+                                    >
+                                        编辑信息
+                                    </button>
+                                    {userInfo.cancellationStatus === 1 ? (
+                                        <button 
+                                            className="btn btn-warning" 
+                                            onClick={handleRevokeCancellation}
+                                            style={{ marginLeft: '10px' }}
+                                        >
+                                            撤销注销
+                                        </button>
+                                    ) : (
+                                        <button 
+                                            className="btn btn-danger" 
+                                            onClick={handleCancelAccount}
+                                            style={{ marginLeft: '10px' }}
+                                        >
+                                            账号注销
+                                        </button>
+                                    )}
+                                </>
                             )}
                         </div>
                     </div>

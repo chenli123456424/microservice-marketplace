@@ -34,6 +34,10 @@ public class User implements Serializable {
     private Integer followerCount = 0;
     // 获赞量
     private Integer likeReceivedCount = 0;
+    // 注销相关字段
+    private Integer cancellationStatus = 0; // 注销状态：0-正常，1-已注销（等待期），2-已删除
+    private LocalDateTime cancellationTime; // 注销时间
+    private LocalDateTime cancellationRevokeTime; // 撤销注销时间
     // 这两个字段由数据库自动维护，通常在Java对象中声明为只读即可
     private LocalDateTime createAt;
     private LocalDateTime updateAt;

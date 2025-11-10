@@ -15,5 +15,11 @@ public interface AnnouncementService extends IService<Announcement> {
      * @return 公告列表
      */
     List<Announcement> getActiveAnnouncements();
+    
+    /**
+     * 获取所有公告列表（不包含content字段，用于列表展示）
+     * @return 公告列表
+     */
+    List<Announcement> listWithoutContent();
 }
 

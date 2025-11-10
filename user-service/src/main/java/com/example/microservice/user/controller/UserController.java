@@ -205,19 +205,62 @@ public class UserController {
         return Collections.singletonMap("message", "验证码已发送");
     }
 
-    // 验证码登录
+    // 验证码登录（如果用户不存在则自动注册）
     @PostMapping("/verify-code")
     public Map<String, Object> verifyCode(@RequestBody VerifyCodeRequest request) {
-        String token = userService.verifyCodeAndLogin(request.getEmail(), request.getCode());
-        
-        // 获取用户信息
-        User user = userService.findByEmail(request.getEmail());
-        
         Map<String, Object> result = new HashMap<>();
-        result.put("token", token);
-        result.put("user", user);
+        try {
+            String token = userService.verifyCodeAndLogin(request.getEmail(), request.getCode());
+            
+            // 获取用户信息
+            User user = userService.findByEmail(request.getEmail());
+            
+            result.put("token", token);
+            result.put("user", user);
+            result.put("success", true);
+        } catch (Exception e) {
+            result.put("success", false);
+            result.put("message", e.getMessage());
+            result.put("errorMessage", e.getMessage());
+        }
         
         return result;
+    }
+
+    // 邮箱验证码注册
+    @PostMapping("/register-with-email")
+    public Map<String, Object> registerWithEmail(@RequestBody VerifyCodeRequest request) {
+        Map<String, Object> result = new HashMap<>();
+        try {
+            if (request.getEmail() == null || request.getEmail().trim().isEmpty()) {
+                result.put("success", false);
+                result.put("errorMessage", "邮箱不能为空");
+                return result;
+            }
+            if (request.getCode() == null || request.getCode().trim().isEmpty()) {
+                result.put("success", false);
+                result.put("errorMessage", "验证码不能为空");
+                return result;
+            }
+
+            User registeredUser = userService.registerWithEmail(request.getEmail(), request.getCode());
+            if (registeredUser != null) {
+                // 生成JWT令牌
+                String token = jwtUtil.generateToken(registeredUser.getUsername());
+                result.put("success", true);
+                result.put("token", token);
+                result.put("user", registeredUser);
+                return result;
+            } else {
+                result.put("success", false);
+                result.put("errorMessage", "注册失败");
+                return result;
+            }
+        } catch (Exception e) {
+            result.put("success", false);
+            result.put("errorMessage", "注册失败: " + e.getMessage());
+            return result;
+        }
     }
 
     // 忘记密码 - 发送重置密码验证码
@@ -319,6 +362,11 @@ public class UserController {
             }
             if (user.getLikeReceivedCount() == null) {
                 user.setLikeReceivedCount(0);
+            }
+            
+            // 如果注销状态为null，设置为0（正常）
+            if (user.getCancellationStatus() == null) {
+                user.setCancellationStatus(0);
             }
             
             return ResponseResult.success(user);
@@ -434,6 +482,66 @@ public class UserController {
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseResult.error("上传失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 注销账号
+     */
+    @PostMapping("/current/cancel")
+    public ResponseResult<String> cancelAccount(
+            @RequestHeader(value = "Authorization", required = false) String authorization) {
+        try {
+            if (authorization == null || !authorization.startsWith("Bearer ")) {
+                return ResponseResult.error("未登录或token无效");
+            }
+
+            String token = authorization.substring(7);
+            String username = jwtUtil.extractUsername(token);
+            User user = userService.findByUsername(username);
+
+            if (user == null) {
+                return ResponseResult.error("用户不存在");
+            }
+
+            boolean success = userService.cancelAccount(user.getId());
+            if (success) {
+                return ResponseResult.success("账号注销成功");
+            } else {
+                return ResponseResult.error("账号注销失败");
+            }
+        } catch (Exception e) {
+            return ResponseResult.error("账号注销失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 撤销注销
+     */
+    @PostMapping("/current/revoke-cancellation")
+    public ResponseResult<String> revokeCancellation(
+            @RequestHeader(value = "Authorization", required = false) String authorization) {
+        try {
+            if (authorization == null || !authorization.startsWith("Bearer ")) {
+                return ResponseResult.error("未登录或token无效");
+            }
+
+            String token = authorization.substring(7);
+            String username = jwtUtil.extractUsername(token);
+            User user = userService.findByUsername(username);
+
+            if (user == null) {
+                return ResponseResult.error("用户不存在");
+            }
+
+            boolean success = userService.revokeCancellation(user.getId());
+            if (success) {
+                return ResponseResult.success("撤销注销成功");
+            } else {
+                return ResponseResult.error("撤销注销失败");
+            }
+        } catch (Exception e) {
+            return ResponseResult.error("撤销注销失败: " + e.getMessage());
         }
     }
 }

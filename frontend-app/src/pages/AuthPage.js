@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
+import { showModal } from '../utils/modal';
 
 function AuthPage() {
     // 控制当前显示的是登录还是注册面板
@@ -168,7 +169,10 @@ function AuthPage() {
     // 发送验证码
     const sendVerificationCode = async () => {
         if (!loginData.email) {
-            alert(language === 'zh' ? '请输入邮箱地址' : 'Please enter your email address');
+            showModal.error(
+                language === 'zh' ? '请输入邮箱地址' : 'Please enter your email address',
+                language === 'zh' ? '提示' : 'Notice'
+            );
             return;
         }
 
@@ -177,12 +181,20 @@ function AuthPage() {
                 email: loginData.email
             });
             setCountdown(60); // 开始60秒倒计时
+            // 显示成功提示
+            showModal.success(
+                language === 'zh' ? '验证码已发送，请查收邮箱' : 'Verification code sent, please check your email',
+                language === 'zh' ? '发送成功' : 'Success'
+            );
         } catch (error) {
             console.error('发送验证码失败', error.response ? error.response.data : error.message);
             const errorMessage = error.response && error.response.data.message
                 ? error.response.data.message
                 : language === 'zh' ? '发送验证码失败' : 'Failed to send verification code';
-            alert(errorMessage);
+            showModal.error(
+                errorMessage,
+                language === 'zh' ? '发送失败' : 'Failed'
+            );
         }
     };
 
@@ -199,6 +211,12 @@ function AuthPage() {
                     email: loginData.email,
                     code: loginData.verificationCode
                 });
+                
+                // 检查响应是否成功
+                if (response.data.success === false) {
+                    throw new Error(response.data.message || response.data.errorMessage || '验证码错误');
+                }
+                
                 token = response.data.token;
                 user = response.data.user;
             } else {
@@ -234,9 +252,17 @@ function AuthPage() {
             navigate('/');
         } catch (error) {
             console.error('登录失败', error.response ? error.response.data : error.message);
-            const errorMessage = error.response && error.response.data.message
-                ? error.response.data.message
-                : t('invalidCredentials');
+            let errorMessage;
+            if (error.message) {
+                // 使用错误对象的消息（可能是验证码错误等）
+                errorMessage = error.message;
+            } else if (error.response && error.response.data) {
+                // 使用响应中的错误信息
+                errorMessage = error.response.data.message || error.response.data.errorMessage || t('invalidCredentials');
+            } else {
+                // 默认错误信息
+                errorMessage = t('invalidCredentials');
+            }
             alert(errorMessage);
         }
     };

@@ -15,21 +15,17 @@ function NotificationPage() {
 
   // 从路由状态或API获取公告详情
   useEffect(() => {
-    // 优先使用路由传递的数据
-    if (location.state?.announcement) {
-      const ann = location.state.announcement;
-      setAnnouncement(ann);
-      setLoading(false);
-      // 标记为已读
-      if (ann.id) {
-        markAnnouncementAsRead(ann.id);
-      }
-      return;
-    }
-
-    // 如果没有传递数据，则从API获取
+    // 始终从详情API获取完整数据（包含content字段）
+    // 即使路由传递了数据，也要重新获取，因为列表接口不返回content字段
     const fetchAnnouncement = async () => {
+      if (!id) {
+        setLoading(false);
+        return;
+      }
+
       try {
+        setLoading(true);
+        // 从详情API获取完整数据（包含content）
         const response = await axios.get(`${API_BASE_URL}/announcement/${id}`);
         if (response.data && response.data.code === 200 && response.data.data) {
           const ann = response.data.data;
@@ -39,16 +35,7 @@ function NotificationPage() {
             markAnnouncementAsRead(ann.id);
           }
         } else {
-          // 如果获取失败，尝试从活跃公告列表中获取
-          const activeResponse = await axios.get(`${API_BASE_URL}/announcement/active`);
-          if (activeResponse.data && activeResponse.data.code === 200 && activeResponse.data.data) {
-            const found = activeResponse.data.data.find(a => a.id === parseInt(id));
-            if (found) {
-              setAnnouncement(found);
-              // 标记为已读
-              markAnnouncementAsRead(found.id);
-            }
-          }
+          console.error('获取公告详情失败:', response.data?.message || '未知错误');
         }
       } catch (error) {
         console.error('获取公告详情失败:', error);
@@ -57,12 +44,8 @@ function NotificationPage() {
       }
     };
 
-    if (id) {
-      fetchAnnouncement();
-    } else {
-      setLoading(false);
-    }
-  }, [id, location.state]);
+    fetchAnnouncement();
+  }, [id]);
 
   // 处理链接点击（在新窗口打开外部链接）
   const handleLinkClick = (e) => {

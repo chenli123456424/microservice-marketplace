@@ -37,12 +37,14 @@ public class AnnouncementController {
     
     /**
      * 获取所有公告列表（管理端）
+     * 列表查询不返回content字段，减少数据传输量，提升性能
      */
     @GetMapping("/list")
     @Operation(summary = "获取所有公告列表")
     public ResponseResult<List<Announcement>> getAllAnnouncements() {
         try {
-            List<Announcement> announcements = announcementService.list();
+            // 使用自定义查询，不返回content字段
+            List<Announcement> announcements = announcementService.listWithoutContent();
             return ResponseResult.success(announcements);
         } catch (Exception e) {
             return ResponseResult.error("获取公告列表失败: " + e.getMessage());
