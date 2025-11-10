@@ -214,7 +214,7 @@ const StorePage = () => {
                         box-shadow: 0 0 0 2px rgba(197, 114, 55, 0.2);
                     }
 
-                    .search-input {
+                    .store-search-input {
                         padding: 10px 20px;
                         border: 1px solid #ddd;
                         border-radius: 8px;
@@ -223,7 +223,7 @@ const StorePage = () => {
                         transition: all 0.3s ease;
                     }
 
-                    .search-input:focus {
+                    .store-search-input:focus {
                         outline: none;
                         border-color: #c57237;
                         box-shadow: 0 0 0 2px rgba(197, 114, 55, 0.2);
@@ -406,7 +406,7 @@ const StorePage = () => {
                             align-items: stretch;
                         }
 
-                        .search-input {
+                        .store-search-input {
                             min-width: auto;
                             width: 100%;
                         }
@@ -457,7 +457,7 @@ const StorePage = () => {
                         <span className="filter-label">搜索：</span>
                         <input
                             type="text"
-                            className="search-input"
+                            className="store-search-input"
                             placeholder="请输入门店名称或地址"
                             value={searchKeyword}
                             onChange={(e) => setSearchKeyword(e.target.value)}

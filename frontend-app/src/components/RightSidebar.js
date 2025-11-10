@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import { showModal } from '../utils/modal';
 
 const RightSidebar = () => {
   const [showBackToTop, setShowBackToTop] = useState(false);
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
 
   // 监听滚动事件
   useEffect(() => {
@@ -114,7 +116,9 @@ const RightSidebar = () => {
       {/* 手机APP */}
       <button
         className="sidebar-button"
-        onClick={() => alert('打开手机APP')}
+        onClick={() => {
+          showModal.info('手机APP未开发', '提示');
+        }}
       >
         <div className="button-icon">
           📱
@@ -128,10 +132,8 @@ const RightSidebar = () => {
       <button
         className="sidebar-button"
         onClick={() => {
-          // 检查用户是否已登录
-          const token = localStorage.getItem('token');
-          if (token) {
-            showModal.info('个人中心功能待实现');
+          if (isAuthenticated) {
+            navigate('/profile');
           } else {
             navigate('/auth');
           }
@@ -148,7 +150,9 @@ const RightSidebar = () => {
       {/* 售后服务 */}
       <button
         className="sidebar-button"
-        onClick={() => alert('联系售后服务')}
+        onClick={() => {
+          navigate('/service');
+        }}
       >
         <div className="button-icon">
           🔍
@@ -161,7 +165,9 @@ const RightSidebar = () => {
       {/* 人工客服 */}
       <button
         className="sidebar-button"
-        onClick={() => alert('联系人工客服')}
+        onClick={() => {
+          showModal.info('人工客服未开发', '提示');
+        }}
       >
         <div className="button-icon">
           📞
